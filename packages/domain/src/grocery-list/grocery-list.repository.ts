@@ -7,6 +7,7 @@ import type {
   GroceryListUpdateData,
 } from "./grocery-list.entity"
 import type { GroceryListNotFoundError } from "./grocery-list.errors"
+import type { ItemEntity } from "@domain/grocery-list-item"
 
 export type GroceryListCountFilters = {
   userId?: UserType["id"]
@@ -27,6 +28,7 @@ export type GroceryListFindFilters = {
 export abstract class GroceryListRepository {
   abstract create(
     list: GroceryListEntity,
+    items: ItemEntity[],
   ): Promise<RepoResult<GroceryListEntity, Error>>
   abstract findById(
     id: GroceryListType["id"],

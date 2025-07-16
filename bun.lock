@@ -23,7 +23,6 @@
         "@orpc/server": "catalog:",
         "@orpc/zod": "catalog:",
         "@repo/contract": "workspace:*",
-        "@repo/domain": "workspace:*",
         "better-auth": "catalog:",
         "dotenv": "^16.6.1",
         "drizzle-orm": "^0.44.2",
@@ -32,7 +31,7 @@
         "fast-jwt": "^6.0.2",
         "hono": "^4.8.4",
         "reflect-metadata": "^0.2.2",
-        "tsyringe": "^4.10.0",
+        "tsyringe": "catalog:",
         "zod": "catalog:",
       },
       "devDependencies": {
@@ -102,12 +101,13 @@
       "version": "1.0.0",
       "dependencies": {
         "@carbonteq/fp": "catalog:",
-        "@repo/domain": "workspace:*",
         "effect": "catalog:",
+        "tsyringe": "catalog:",
         "zod": "catalog:",
       },
       "devDependencies": {
         "@repo/typescript-config": "workspace:*",
+        "@standard-schema/spec": "^1.0.0",
         "@types/bun": "catalog:",
         "@types/json-schema": "^7.0.15",
         "@typescript/native-preview": "catalog:",
@@ -139,6 +139,7 @@
       "dependencies": {
         "@carbonteq/fp": "catalog:",
         "effect": "catalog:",
+        "tsyringe": "catalog:",
         "zod": "catalog:",
       },
       "devDependencies": {
@@ -172,6 +173,7 @@
     "oxlint": "^1.1.0",
     "prettier": "^3.5.3",
     "taze": "^19.1.0",
+    "tsyringe": "^4.10.0",
     "typescript": "^5.8.3",
     "zod": "^3.25.0",
   },

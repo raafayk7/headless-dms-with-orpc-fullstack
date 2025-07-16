@@ -2,6 +2,7 @@ import { Option } from "@carbonteq/fp"
 import { DateTime as DT, ParseResult, Schema as S } from "effect"
 import type { JSONSchema7 } from "json-schema"
 import { addMethodsToSchema, createEncoderDecoderBridge } from "./schema-utils"
+import type { Brand } from "effect/Brand"
 
 export const UUIDBase = S.asSchema(
   S.UUID.pipe(S.brand("UUID")).annotations({
@@ -21,6 +22,10 @@ export const UUIDBase = S.asSchema(
 export const UUID = addMethodsToSchema(UUIDBase, {
   // Works with chained brands as well
   new: () => crypto.randomUUID() as S.Schema.Type<typeof UUIDBase>,
+  extend: <Tag extends string>(tag: Tag) =>
+    addMethodsToSchema(UUIDBase.pipe(S.brand(tag)), {
+      new: () => crypto.randomUUID() as string & Brand<"UUID"> & Brand<Tag>,
+    }),
 })
 
 export type UUIDType = S.Schema.Type<typeof UUID>

@@ -29,9 +29,14 @@ const getStatsHandler = base.getStats.handler(async ({ context }) => {
   return handleAppResult(result)
 })
 
-const createGroceryHandler = base.createGroceryList.handler(async () => {
-  throw new Error("Not implemented yet")
-})
+const createGroceryHandler = base.createGroceryList.handler(
+  async ({ input, context }) => {
+    const groceryListFlows = container.resolve(GroceryListWorkflows)
+    const result = await groceryListFlows.createGroceryList(input, context.user)
+
+    return handleAppResult(result)
+  },
+)
 
 const updateGroceryHandler = base.updateGroceryList.handler(
   async ({ input, context }) => {

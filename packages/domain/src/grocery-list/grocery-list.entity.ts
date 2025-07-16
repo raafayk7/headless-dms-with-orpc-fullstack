@@ -1,20 +1,18 @@
 import type { Result } from "@carbonteq/fp"
 import { Result as R } from "@carbonteq/fp"
-import type { UserType } from "@domain/user/user.entity"
+import { UserEntity, UserSchema, type UserType } from "@domain/user/user.entity"
 import { BaseEntity, defineEntityStruct } from "@domain/utils/base.entity"
-import { DateTime, UUID } from "@domain/utils/refined-types"
 import { createEncoderDecoderBridge } from "@domain/utils/schema-utils"
 import { Schema as S } from "effect"
 import { GroceryListOwnershipError } from "./grocery-list.errors"
 
-export const GroceryListId = UUID.pipe(S.brand("GroceryListId"))
-export const GroceryListSchema = defineEntityStruct({
-  id: GroceryListId,
+export const GroceryListSchema = defineEntityStruct("GroceryListId", {
   name: S.String.pipe(S.minLength(1)),
   description: S.String,
   active: S.Boolean,
-  ownerId: UUID.pipe(S.brand("UserId")),
+  ownerId: UserSchema.id,
 })
+export const GroceryListId = GroceryListSchema.id
 
 export const GroceryListCreateSchema = GroceryListSchema.pipe(
   S.pick("name", "description"),
@@ -54,16 +52,13 @@ export class GroceryListEntity extends BaseEntity implements GroceryListType {
 
   static create(
     data: GroceryListCreateData,
-    owner: UserType,
+    owner: UserEntity,
   ): GroceryListEntity {
     const groceryListData: GroceryListType = {
-      id: GroceryListId.make(UUID.new()),
-      createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
-      name: data.name,
-      active: false,
-      description: data.description,
+      ...GroceryListSchema.baseInit(),
+      ...data,
       ownerId: owner.id,
+      active: false,
     }
 
     return new GroceryListEntity(groceryListData)
@@ -81,7 +76,7 @@ export class GroceryListEntity extends BaseEntity implements GroceryListType {
     return this.ownerId === userId
   }
 
-  ensureIsOwner(user: UserType): Result<void, GroceryListOwnershipError> {
+  ensureIsOwner(user: UserEntity): Result<void, GroceryListOwnershipError> {
     if (!this.isOwner(user.id)) {
       return R.Err(new GroceryListOwnershipError(this.id))
     }

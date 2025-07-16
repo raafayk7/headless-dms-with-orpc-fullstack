@@ -5,7 +5,8 @@
     "baseUrl": ".",
     "paths": {
       "@contract/*": ["./src/*"],
-      "@domain/*": ["../domain/src/*"]
+      "@domain/*": ["../domain/src/*"],
+      "@application/*": ["../application/src/*"]
     }
   },
   "include": ["src", "test"],

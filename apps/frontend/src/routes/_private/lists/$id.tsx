@@ -1,4 +1,4 @@
-import { ListDetailsPage } from "@app/pages/lists/details"
+import { ListDetailsPage } from "@app/pages/lists/details-page"
 import { prefetchList } from "@app/shared/hooks/lists-hooks"
 import { createFileRoute } from "@tanstack/react-router"
 

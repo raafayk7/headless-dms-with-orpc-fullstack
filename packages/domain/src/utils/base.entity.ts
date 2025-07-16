@@ -1,5 +1,6 @@
 import { Schema as S } from "effect"
 import { DateTime, UUID } from "./refined-types"
+import { addMethodsToSchema } from "./schema-utils"
 
 export const baseEntityFields = {
   id: UUID,
@@ -10,15 +11,31 @@ export type TBaseEntityFields = typeof baseEntityFields
 
 const baseEntityStruct = S.mutable(S.Struct(baseEntityFields))
 
-export const defineEntityStruct = <Fields extends S.Struct.Fields>(
+export const defineEntityStruct = <
+  Tag extends string,
+  Fields extends S.Struct.Fields,
+>(
+  tag: Tag,
   fields: Fields,
-) =>
-  S.asSchema(
-    S.Struct({
-      ...baseEntityFields,
-      ...fields,
+) => {
+  const id = baseEntityFields.id.extend(tag)
+
+  const struct = S.Struct({
+    ...baseEntityFields,
+    id,
+    ...fields,
+  })
+  const extendedStruct = addMethodsToSchema(struct, {
+    baseInit: () => ({
+      id: id.new(),
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
     }),
-  )
+    id,
+  })
+
+  return extendedStruct
+}
 
 export type BaseEntityEncoded = S.Schema.Encoded<typeof baseEntityStruct>
 export type BaseEntityType = S.Schema.Type<typeof baseEntityStruct>

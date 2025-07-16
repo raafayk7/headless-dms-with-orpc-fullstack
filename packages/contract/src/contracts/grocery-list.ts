@@ -1,6 +1,8 @@
+import { CreateGroceryListDto } from "@application/dtos/grocery-list.dto"
+import { DashboardStatsSchema } from "@application/schemas/dashboard"
+import { dtoSchema } from "@application/utils/validation.utils"
 import { appAuthenticatedBase } from "@contract/utils/oc.base"
 import {
-  GroceryListCreateSchema,
   GroceryListId,
   GroceryListUpdateSchema,
 } from "@domain/grocery-list/grocery-list.entity"
@@ -11,15 +13,6 @@ import {
 } from "@domain/grocery-list/grocery-list.schemas"
 import { type } from "@orpc/contract"
 import { Schema as S } from "effect"
-
-const DashboardStatsSchema = S.Struct({
-  totalLists: S.Number,
-  recentLists: S.Number,
-  completedToday: S.Number,
-  pendingItems: S.Number,
-})
-
-export type DashboardStats = S.Schema.Type<typeof DashboardStatsSchema>
 
 const groceryListBase = appAuthenticatedBase
 
@@ -79,8 +72,8 @@ export const createGroceryList = groceryListBase
     summary: "Create a new grocery list",
     tags: ["grocery-list"],
   })
-  .input(S.standardSchemaV1(GroceryListCreateSchema))
-  .output(S.standardSchemaV1(GetListsResultSchema))
+  .input(dtoSchema(CreateGroceryListDto))
+  .output(S.standardSchemaV1(GroceryListDetailsSchema))
 
 export const updateGroceryList = groceryListBase
   .route({

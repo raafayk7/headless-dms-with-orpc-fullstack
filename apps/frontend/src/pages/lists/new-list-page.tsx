@@ -19,6 +19,7 @@ import { ArrowLeft } from "lucide-react"
 const formSchema = type({
   name: "string>=1",
   description: "string",
+  items: type({}).array(),
 })
 
 export const NewListPage = () => {
@@ -26,7 +27,7 @@ export const NewListPage = () => {
   const queryClient = useQueryClient()
 
   const form = useAppForm({
-    defaultValues: { name: "", description: "" },
+    defaultValues: { name: "", description: "", items: [] },
     validators: { onSubmit: formSchema },
 
     onSubmit: async ({ value }) => {

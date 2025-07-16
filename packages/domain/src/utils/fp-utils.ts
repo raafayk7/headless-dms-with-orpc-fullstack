@@ -85,6 +85,11 @@ type WithSerializeResult<T> = {
   serialize: () => Result<T, ParseError>
 }
 
+type WithSerializeAndId<T, Id> = {
+  id: Id
+  serialize: () => Result<T, ParseError>
+}
+
 export const ResultUtils = {
   resultToEither,
   eitherToResult,
@@ -92,6 +97,11 @@ export const ResultUtils = {
   effectToResult,
   effectToResultAsync,
   serialized: <T>(obj: WithSerialize<T>): T => obj.serialize(),
+
+  serializedPreserveId: <T, Id>(
+    obj: WithSerializeAndId<T, Id>,
+  ): Result<Omit<T, "id"> & { id: Id }, ParseError> =>
+    obj.serialize().map((data) => ({ ...data, id: obj.id })),
   encoded: <T>(obj: WithSerializeResult<T>): Result<T, ValidationError> =>
     obj.serialize().mapErr(parseErrorToValidationError),
   pick:

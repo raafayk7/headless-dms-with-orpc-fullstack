@@ -6,15 +6,14 @@ import {
 } from "@domain/grocery-list/grocery-list.entity"
 import { UserIdSchema, type UserType } from "@domain/user/user.entity"
 import { BaseEntity, defineEntityStruct } from "@domain/utils/base.entity"
-import { Opt, UUID } from "@domain/utils/refined-types"
+import { Opt } from "@domain/utils/refined-types"
 import { createEncoderDecoderBridge } from "@domain/utils/schema-utils"
 import { Schema as S } from "effect"
 import { ItemListMismatchError, ItemOwnershipError } from "./item.errors"
 
 export const ItemStatusSchema = S.Literal("pending", "bought")
 
-export const ItemSchema = defineEntityStruct({
-  id: UUID.pipe(S.brand("ItemId")),
+export const ItemSchema = defineEntityStruct("ItemId", {
   listId: GroceryListId,
   name: S.String.pipe(S.minLength(1)),
   quantity: S.Number.pipe(S.positive()),
@@ -22,6 +21,11 @@ export const ItemSchema = defineEntityStruct({
   status: ItemStatusSchema,
   createdBy: UserIdSchema,
 })
+
+export const ItemCreateSchema = ItemSchema.pipe(
+  S.pick("name", "quantity", "notes"),
+)
+export type ItemCreateData = S.Schema.Type<typeof ItemCreateSchema>
 
 export const ItemUpdateSchema = S.partial(
   ItemSchema.pipe(S.pick("name", "quantity", "status", "notes")),
@@ -55,6 +59,16 @@ export class ItemEntity extends BaseEntity implements ItemType {
     this.status = data.status
     this.createdBy = data.createdBy
     this.notes = data.notes
+  }
+
+  static create(data: ItemCreateData, list: GroceryListType, owner: UserType) {
+    return new ItemEntity({
+      ...ItemSchema.baseInit(),
+      ...data,
+      listId: list.id,
+      createdBy: owner.id,
+      status: "pending",
+    })
   }
 
   static from(data: ItemType): ItemEntity {
@@ -99,10 +113,6 @@ export class ItemEntity extends BaseEntity implements ItemType {
     }
 
     return R.UNIT_RESULT
-  }
-
-  canBeDeletedBy(userId: UserType["id"]): boolean {
-    return this.isCreatedBy(userId)
   }
 
   serialize() {

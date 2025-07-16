@@ -1,13 +1,17 @@
 import { Result } from "@carbonteq/fp"
-import { type ItemEntity } from "@domain/grocery-list-item/item.entity"
-import { type UserEntity, type UserType } from "@domain/user/user.entity"
+import { ItemEntity } from "@domain/grocery-list-item/item.entity"
+import { type UserEntity } from "@domain/user/user.entity"
 import type { ValidationError } from "@domain/utils"
 import { ResultUtils } from "@domain/utils/fp-utils"
-import { type GroceryListEntity } from "./grocery-list.entity"
+import { GroceryListEntity } from "./grocery-list.entity"
 import type { GroceryListOwnershipError } from "./grocery-list.errors"
-import type { GroceryListDetails } from "./grocery-list.schemas"
+import type {
+  GroceryListDetails,
+  NewGroceryListData,
+} from "./grocery-list.schemas"
 
 type GroceryListStats = GroceryListDetails["stats"]
+
 export class GroceryListService {
   static calculateDetailedStats(items: ItemEntity[]): GroceryListStats {
     const totalItems = items.length
@@ -84,39 +88,48 @@ export class GroceryListService {
     }
   }
 
-  static validateBulkItemOperation(
-    items: ItemEntity[],
-    operation: "mark-complete" | "mark-pending" | "delete",
-    userId: UserType["id"],
-  ): { valid: boolean; errors: string[] } {
-    const errors: string[] = []
-
-    // Check if all items can be modified by the user
-    const unauthorizedItems = items.filter(
-      (item) => !item.canBeDeletedBy(userId),
+  static createNewList(data: NewGroceryListData, owner: UserEntity) {
+    const list = GroceryListEntity.create(data, owner)
+    const items = data.items.map((itemData) =>
+      ItemEntity.create(itemData, list, owner),
     )
-    if (unauthorizedItems.length > 0) {
-      errors.push(
-        `Cannot ${operation} ${unauthorizedItems.length} items: insufficient permissions`,
-      )
-    }
 
-    // Check operation-specific rules
-    if (operation === "mark-complete") {
-      const alreadyCompleted = items.filter((item) => item.isBought())
-      if (alreadyCompleted.length === items.length) {
-        errors.push("All items are already completed")
-      }
-    } else if (operation === "mark-pending") {
-      const alreadyPending = items.filter((item) => item.isPending())
-      if (alreadyPending.length === items.length) {
-        errors.push("All items are already pending")
-      }
-    }
-
-    return {
-      valid: errors.length === 0,
-      errors,
-    }
+    return { list, items }
   }
+
+  // static validateBulkItemOperation(
+  //   items: ItemEntity[],
+  //   operation: "mark-complete" | "mark-pending" | "delete",
+  //   userId: UserType["id"],
+  // ): { valid: boolean; errors: string[] } {
+  //   const errors: string[] = []
+  //
+  //   // Check if all items can be modified by the user
+  //   const unauthorizedItems = items.filter(
+  //     (item) => !item.canBeDeletedBy(userId),
+  //   )
+  //   if (unauthorizedItems.length > 0) {
+  //     errors.push(
+  //       `Cannot ${operation} ${unauthorizedItems.length} items: insufficient permissions`,
+  //     )
+  //   }
+  //
+  //   // Check operation-specific rules
+  //   if (operation === "mark-complete") {
+  //     const alreadyCompleted = items.filter((item) => item.isBought())
+  //     if (alreadyCompleted.length === items.length) {
+  //       errors.push("All items are already completed")
+  //     }
+  //   } else if (operation === "mark-pending") {
+  //     const alreadyPending = items.filter((item) => item.isPending())
+  //     if (alreadyPending.length === items.length) {
+  //       errors.push("All items are already pending")
+  //     }
+  //   }
+  //
+  //   return {
+  //     valid: errors.length === 0,
+  //     errors,
+  //   }
+  // }
 }

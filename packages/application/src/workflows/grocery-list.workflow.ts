@@ -1,7 +1,6 @@
 import type { CreateGroceryListDto } from "@application/dtos/grocery-list.dto"
 import { ApplicationResult } from "@application/utils/application-result.utils"
 import { Result } from "@carbonteq/fp"
-import type { DashboardStats } from "@contract/contracts/grocery-list"
 import type { GroceryListType } from "@domain/grocery-list/grocery-list.entity"
 import {
   type GroceryListFindFilters,
@@ -11,6 +10,7 @@ import type {
   GetListsParams,
   GetListsResult,
   GroceryListEncoded,
+  NewGroceryListData,
 } from "@domain/grocery-list/grocery-list.schemas"
 import { GroceryListService } from "@domain/grocery-list/grocery-list.service"
 import { ItemRepository } from "@domain/grocery-list-item/item.repository"
@@ -18,6 +18,7 @@ import type { UserEntity } from "@domain/user/user.entity"
 import { ResultUtils } from "@domain/utils/fp-utils"
 import { DateTime as DT } from "effect"
 import { autoInjectable } from "tsyringe"
+import type { DashboardStats } from "@application/schemas/dashboard"
 
 const sevenDaysAgo = () => {
   const date = new Date()
@@ -45,10 +46,16 @@ export class GroceryListWorkflows {
     return ApplicationResult.fromResult(listDetails)
   }
 
-  async createGroceryList(
-    _dto: CreateGroceryListDto,
-  ): Promise<ApplicationResult<GroceryListEncoded>> {
-    return ApplicationResult.Err(new Error("Not implemented yet"))
+  async createGroceryList(dto: CreateGroceryListDto, user: UserEntity) {
+    const { items, list } = GroceryListService.createNewList(dto.data, user)
+
+    const listPersistResult = await this.groceryListRepo.create(list, items)
+
+    const result = listPersistResult.flatMap((_) =>
+      GroceryListService.processListDetails(list, user, items),
+    )
+
+    return ApplicationResult.fromResult(result)
   }
 
   async fetchGroceryListsForUser(user: UserEntity) {

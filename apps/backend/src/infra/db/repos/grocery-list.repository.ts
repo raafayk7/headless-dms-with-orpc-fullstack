@@ -12,7 +12,11 @@ import {
   GroceryListRepository,
 } from "@domain/grocery-list/grocery-list.repository"
 import type { UserType } from "@domain/user/user.entity"
-import { type RepoResult, type RepoUnitResult } from "@domain/utils"
+import {
+  ResultUtils,
+  type RepoResult,
+  type RepoUnitResult,
+} from "@domain/utils"
 import {
   calculateOffset,
   createPaginatedResult,
@@ -24,8 +28,9 @@ import { and, asc, desc, eq, gte, ilike } from "drizzle-orm"
 import { injectable } from "tsyringe"
 import type { AppDatabase } from "../conn"
 import { InjectDb } from "../conn"
-import { groceryLists } from "../schema"
+import { groceryLists, groceryListItems } from "../schema"
 import { enhanceEntityMapper } from "./repo.utils"
+import type { ItemEncoded, ItemEntity } from "@domain/grocery-list-item"
 
 const mapper = enhanceEntityMapper((row: typeof groceryLists.$inferSelect) =>
   GList.fromEncoded({
@@ -47,29 +52,36 @@ export class DrizzleGroceryListRepository extends GroceryListRepository {
 
   async create(
     list: GroceryListEntity,
-  ): Promise<RepoResult<GroceryListEntity, Error>> {
-    try {
-      const encoded = list.serialize().unwrap()
+    items: ItemEntity[],
+  ): Promise<RepoResult<GroceryListEntity>> {
+    const encoded = ResultUtils.encoded(list).flatZip(() =>
+      ResultUtils.mapParseErrors(items.map(ResultUtils.serializedPreserveId)),
+    )
 
-      const values = {
-        ...encoded,
-        id: list.id,
-        userId: list.ownerId,
-      } satisfies typeof groceryLists.$inferInsert
+    const res = await encoded
+      .map(async ([listData, itemsData]) => {
+        await this.db.transaction(async (tx) => {
+          await tx.insert(groceryLists).values({
+            ...listData,
+            id: list.id,
+            userId: list.ownerId,
+          })
 
-      const [inserted] = await this.db
-        .insert(groceryLists)
-        .values(values)
-        .returning()
+          await tx.insert(groceryListItems).values(
+            itemsData.map((itemEncoded) => ({
+              ...itemEncoded,
+              id: itemEncoded.id,
+              listId: list.id,
+              createdBy: list.ownerId,
+            })),
+          )
+        })
 
-      if (!inserted) {
-        return R.Err(new Error("Failed to create grocery list"))
-      }
+        return list
+      })
+      .toPromise()
 
-      return mapper.mapOne(inserted)
-    } catch (error) {
-      return R.Err(error as Error)
-    }
+    return res
   }
 
   async findById(
