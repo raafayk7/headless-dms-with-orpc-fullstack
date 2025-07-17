@@ -1,3 +1,4 @@
+import type { ItemEntity } from "@domain/grocery-list-item"
 import type { UserType } from "@domain/user/user.entity"
 import type { RepoResult, RepoUnitResult } from "@domain/utils"
 import type { Paginated } from "@domain/utils/pagination.utils"
@@ -7,7 +8,6 @@ import type {
   GroceryListUpdateData,
 } from "./grocery-list.entity"
 import type { GroceryListNotFoundError } from "./grocery-list.errors"
-import type { ItemEntity } from "@domain/grocery-list-item"
 
 export type GroceryListCountFilters = {
   userId?: UserType["id"]

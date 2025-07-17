@@ -1,6 +1,4 @@
 import { Result, type UNIT } from "@carbonteq/fp"
-import { ParseError } from "@effect/schema/ParseResult"
-
 import {
   ConflictError,
   ExternalServiceError,
@@ -9,7 +7,8 @@ import {
   NotFoundError,
   UnauthorizedError,
   ValidationError,
-} from "@repo/domain"
+} from "@domain/utils/base.errors"
+import { ParseError } from "@effect/schema/ParseResult"
 
 export enum AppErrStatus {
   NotFound = "NotFound",

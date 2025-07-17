@@ -1,4 +1,9 @@
 import { describe, expect, it } from "bun:test"
+import {
+  AppError,
+  AppErrStatus,
+  ApplicationResult,
+} from "@application/utils/application-result.utils"
 import { Result } from "@carbonteq/fp"
 import {
   ConflictError,
@@ -8,12 +13,7 @@ import {
   NotFoundError,
   UnauthorizedError,
   ValidationError,
-} from "@repo/domain"
-import {
-  AppError,
-  AppErrStatus,
-  ApplicationResult,
-} from "../src/utils/application-result.utils"
+} from "@domain/utils/base.errors"
 
 describe("ApplicationResult", () => {
   describe("static constructors", () => {
@@ -87,20 +87,19 @@ describe("ApplicationResult", () => {
 
   describe("AppError", () => {
     it("should create different error types", () => {
-      expect(AppError.NotFound().status).toBe(AppErrStatus.NotFound)
-      expect(AppError.InvalidData().status).toBe(AppErrStatus.InvalidData)
-      expect(AppError.Unauthorized().status).toBe(AppErrStatus.Unauthorized)
-      expect(AppError.Forbidden().status).toBe(AppErrStatus.Forbidden)
-      expect(AppError.Conflict().status).toBe(AppErrStatus.Conflict)
-      expect(AppError.InternalError().status).toBe(AppErrStatus.InternalError)
-      expect(AppError.ExternalServiceError().status).toBe(
+      expect(AppError.NotFound("").status).toBe(AppErrStatus.NotFound)
+      expect(AppError.InvalidData("").status).toBe(AppErrStatus.InvalidData)
+      expect(AppError.Unauthorized("").status).toBe(AppErrStatus.Unauthorized)
+      expect(AppError.Forbidden("").status).toBe(AppErrStatus.Forbidden)
+      expect(AppError.Conflict("").status).toBe(AppErrStatus.Conflict)
+      expect(AppError.InternalError("").status).toBe(AppErrStatus.InternalError)
+      expect(AppError.ExternalServiceError("").status).toBe(
         AppErrStatus.ExternalServiceError,
       )
       expect(AppError.Generic("test").status).toBe(AppErrStatus.Generic)
     })
 
     it("should map different error types using instanceof checks", () => {
-      // Test domain error mapping with actual domain error instances
       const notFoundError = new NotFoundError("TestResource", "123")
       expect(AppError.fromErr(notFoundError).status).toBe(AppErrStatus.NotFound)
 
@@ -138,7 +137,6 @@ describe("ApplicationResult", () => {
         AppErrStatus.ExternalServiceError,
       )
 
-      // Test unknown error type fallback
       const unknownError = new Error("unknown error")
       expect(AppError.fromErr(unknownError).status).toBe(AppErrStatus.Generic)
     })

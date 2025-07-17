@@ -11,11 +11,12 @@ import {
   type GroceryListFindFilters,
   GroceryListRepository,
 } from "@domain/grocery-list/grocery-list.repository"
+import type { ItemEncoded, ItemEntity } from "@domain/grocery-list-item"
 import type { UserType } from "@domain/user/user.entity"
 import {
-  ResultUtils,
   type RepoResult,
   type RepoUnitResult,
+  ResultUtils,
 } from "@domain/utils"
 import {
   calculateOffset,
@@ -28,9 +29,8 @@ import { and, asc, desc, eq, gte, ilike } from "drizzle-orm"
 import { injectable } from "tsyringe"
 import type { AppDatabase } from "../conn"
 import { InjectDb } from "../conn"
-import { groceryLists, groceryListItems } from "../schema"
+import { groceryListItems, groceryLists } from "../schema"
 import { enhanceEntityMapper } from "./repo.utils"
-import type { ItemEncoded, ItemEntity } from "@domain/grocery-list-item"
 
 const mapper = enhanceEntityMapper((row: typeof groceryLists.$inferSelect) =>
   GList.fromEncoded({

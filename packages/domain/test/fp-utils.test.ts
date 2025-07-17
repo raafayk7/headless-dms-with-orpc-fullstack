@@ -1,14 +1,16 @@
-import { test, expect } from "bun:test"
-import { Effect, Either } from "effect"
+import { expect, test } from "bun:test"
 import { Result } from "@carbonteq/fp/result"
+import { Effect, Either, Schema as S } from "effect"
+import { ValidationError } from "../src/utils/base.errors"
 import {
-  eitherToResult,
-  resultToEither,
   effectToResult,
   effectToResultAsync,
-  resultToEffect,
+  eitherToResult,
   ResultUtils,
+  resultToEffect,
+  resultToEither,
 } from "../src/utils/fp-utils"
+import type { Paginated } from "../src/utils/pagination.utils"
 
 test("eitherToResult - converts Either.right to Result.Ok", () => {
   const either = Either.right(42)
@@ -67,7 +69,7 @@ test("effectToResult - throws error for async effects", () => {
   const asyncEffect = Effect.delay(Effect.succeed(42), "1 millis")
 
   expect(() => effectToResult(asyncEffect)).toThrow(
-    "Cannot run effect synchronously - it contains async operations"
+    "Cannot run effect synchronously - it contains async operations",
   )
 })
 
@@ -166,7 +168,7 @@ test("ResultUtils.pick - picks specified keys from Ok result", () => {
     name: "John",
     email: "john@example.com",
     age: 30,
-    city: "NYC"
+    city: "NYC",
   })
 
   const picked = ResultUtils.pick("name", "email")(result)
@@ -216,64 +218,12 @@ test("ResultUtils.extract - throws error for missing key", () => {
   const result = Result.Ok({ name: "John" })
 
   expect(() => {
-    // Testing runtime behavior for non-existent key by using any
-    const extracted = ResultUtils.extract("age" as any)(result)
+    // Testing runtime behavior for non-existent key by using unknown
+    const extracted = ResultUtils.extract("age" as keyof { name: string })(
+      result,
+    )
     extracted.unwrap()
   }).toThrow("Key age not found in result")
-})
-
-test("ResultUtils.transform - transforms Ok result value", () => {
-  const result = Result.Ok(5)
-
-  const transformed = ResultUtils.transform((x: number) => x * 2)(result)
-
-  expect(transformed.isOk()).toBe(true)
-  expect(transformed.unwrap()).toBe(10)
-})
-
-test("ResultUtils.transform - preserves Err result", () => {
-  const result = Result.Err<string, number>("error")
-
-  const transformed = ResultUtils.transform((x: number) => x * 2)(result)
-
-  expect(transformed.isErr()).toBe(true)
-  expect(transformed.unwrapErr()).toBe("error")
-})
-
-test("ResultUtils.collect - collects all successful results", () => {
-  const results = [
-    Result.Ok(1),
-    Result.Ok(2),
-    Result.Ok(3),
-  ]
-
-  const collected = ResultUtils.collect(results)
-
-  expect(collected.isOk()).toBe(true)
-  expect(collected.unwrap()).toEqual([1, 2, 3])
-})
-
-test("ResultUtils.collect - returns errors when any result fails", () => {
-  const results = [
-    Result.Ok(1),
-    Result.Err("error1"),
-    Result.Ok(3),
-    Result.Err("error2"),
-  ]
-
-  const collected = ResultUtils.collect(results)
-
-  expect(collected.isErr()).toBe(true)
-  expect(collected.unwrapErr()).toEqual(["error1", "error2"])
-})
-
-test("ResultUtils.collect - handles empty array", () => {
-  const results: Result<number, string>[] = []
-
-  const collected = ResultUtils.collect(results)
-
-  expect(collected.isOk()).toBe(true)
-  expect(collected.unwrap()).toEqual([])
 })
 
 test("ResultUtils.filterOk - filters and unwraps successful results", () => {
@@ -302,32 +252,245 @@ test("ResultUtils.filterErr - filters and unwraps failed results", () => {
   expect(errors).toEqual(["error1", "error2"])
 })
 
-test("ResultUtils.mapCollect - maps and collects successful results", () => {
-  const items = [1, 2, 3, 4]
-  const mapper = (x: number) => x % 2 === 0 ? Result.Ok(x * 2) : Result.Err(`odd: ${x}`)
+// Tests for serializedPreserveId
 
-  const result = ResultUtils.mapCollect(mapper)(items)
+test("ResultUtils.serializedPreserveId - preserves id from object and merges with serialized data", () => {
+  const mockParseResult = Result.Ok({ name: "Test", value: 42 })
+  const obj = {
+    id: "test-id-123",
+    serialize: () => mockParseResult,
+  }
 
-  expect(result.isErr()).toBe(true)
-  expect(result.unwrapErr()).toEqual(["odd: 1", "odd: 3"])
-})
-
-test("ResultUtils.mapCollect - collects all when all succeed", () => {
-  const items = [2, 4, 6]
-  const mapper = (x: number) => Result.Ok(x * 2)
-
-  const result = ResultUtils.mapCollect(mapper)(items)
+  const result = ResultUtils.serializedPreserveId(obj)
 
   expect(result.isOk()).toBe(true)
-  expect(result.unwrap()).toEqual([4, 8, 12])
+  expect(result.unwrap()).toEqual({
+    id: "test-id-123",
+    name: "Test",
+    value: 42,
+  })
 })
 
-test("ResultUtils.mapCollect - handles empty array", () => {
-  const items: number[] = []
-  const mapper = (x: number) => Result.Ok(x * 2)
+test("ResultUtils.serializedPreserveId - preserves Err from serialize method", () => {
+  // Generate a real ParseError using schema validation
+  const failingResult = S.decodeUnknownEither(S.Number)("not-a-number") // This will fail
 
-  const result = ResultUtils.mapCollect(mapper)(items)
+  expect(failingResult._tag).toBe("Left")
+
+  if (failingResult._tag === "Left") {
+    const mockParseResult = Result.Err(failingResult.left)
+    const obj = {
+      id: "test-id-123",
+      serialize: () => mockParseResult,
+    }
+
+    const result = ResultUtils.serializedPreserveId(obj)
+
+    expect(result.isErr()).toBe(true)
+  }
+})
+
+// Tests for encoded
+
+test("ResultUtils.encoded - converts successful ParseResult to ValidationError", () => {
+  const mockParseResult = Result.Ok({ data: "test" })
+  const obj = {
+    serialize: () => mockParseResult,
+  }
+
+  const result = ResultUtils.encoded(obj)
 
   expect(result.isOk()).toBe(true)
-  expect(result.unwrap()).toEqual([])
+  expect(result.unwrap()).toEqual({ data: "test" })
+})
+
+test("ResultUtils.encoded - converts ParseError to ValidationError", () => {
+  // Generate a real ParseError using schema validation
+  const failingResult = S.decodeUnknownEither(S.String)(123) // This will fail
+
+  expect(failingResult._tag).toBe("Left")
+
+  if (failingResult._tag === "Left") {
+    const mockParseResult = Result.Err(failingResult.left)
+    const obj = {
+      serialize: () => mockParseResult,
+    }
+
+    const result = ResultUtils.encoded(obj)
+
+    expect(result.isErr()).toBe(true)
+    expect(result.unwrapErr()).toBeInstanceOf(ValidationError)
+  }
+})
+
+// Tests for collectSuccessful
+
+test("ResultUtils.collectSuccessful - returns Ok with all values when all results are successful", () => {
+  const results = [Result.Ok(1), Result.Ok(2), Result.Ok(3)]
+
+  const collected = ResultUtils.collectSuccessful(results)
+
+  expect(collected.isOk()).toBe(true)
+  expect(collected.unwrap()).toEqual([1, 2, 3])
+})
+
+test("ResultUtils.collectSuccessful - returns Err with all errors when any result fails", () => {
+  const results = [
+    Result.Ok(1),
+    Result.Err("error1"),
+    Result.Ok(3),
+    Result.Err("error2"),
+  ]
+
+  const collected = ResultUtils.collectSuccessful(results)
+
+  expect(collected.isErr()).toBe(true)
+  expect(collected.unwrapErr()).toEqual(["error1", "error2"])
+})
+
+test("ResultUtils.collectSuccessful - handles empty array", () => {
+  const results: Result<number, string>[] = []
+
+  const collected = ResultUtils.collectSuccessful(results)
+
+  expect(collected.isOk()).toBe(true)
+  expect(collected.unwrap()).toEqual([])
+})
+
+// Tests for log
+
+test("ResultUtils.log - logs success result", () => {
+  const originalLog = console.log
+  const logs: unknown[] = []
+  console.log = (...args) => logs.push(args)
+
+  const result = Result.Ok("success value")
+  ResultUtils.log(result, "TEST")
+
+  expect(logs).toHaveLength(1)
+  expect(logs[0]).toEqual(["TEST Success:", "success value"])
+
+  console.log = originalLog
+})
+
+test("ResultUtils.log - logs error result", () => {
+  const originalError = console.error
+  const errors: unknown[] = []
+  console.error = (...args) => errors.push(args)
+
+  const result = Result.Err("error value")
+  ResultUtils.log(result, "TEST")
+
+  expect(errors).toHaveLength(1)
+  expect(errors[0]).toEqual(["TEST Error:", "error value"])
+
+  console.error = originalError
+})
+
+test("ResultUtils.log - works without prefix", () => {
+  const originalLog = console.log
+  const logs: unknown[] = []
+  console.log = (...args) => logs.push(args)
+
+  const result = Result.Ok("success")
+  ResultUtils.log(result)
+
+  expect(logs).toHaveLength(1)
+  expect(logs[0]).toEqual([" Success:", "success"])
+
+  console.log = originalLog
+})
+
+// Tests for mapParseErrors
+
+test("ResultUtils.mapParseErrors - converts successful ParseResults to ValidationError Result", () => {
+  const results = [
+    Result.Ok("value1"),
+    Result.Ok("value2"),
+    Result.Ok("value3"),
+  ]
+
+  const mapped = ResultUtils.mapParseErrors(results)
+
+  expect(mapped.isOk()).toBe(true)
+  expect(mapped.unwrap()).toEqual(["value1", "value2", "value3"])
+})
+
+test("ResultUtils.mapParseErrors - converts ParseErrors to ValidationError", () => {
+  // Generate a real ParseError using schema validation
+  const failingResult = S.decodeUnknownEither(S.String)(123) // This will fail
+
+  expect(failingResult._tag).toBe("Left")
+
+  if (failingResult._tag === "Left") {
+    const results = [
+      Result.Ok("value1"),
+      Result.Err(failingResult.left),
+      Result.Ok("value3"),
+    ]
+
+    const mapped = ResultUtils.mapParseErrors(results)
+
+    expect(mapped.isErr()).toBe(true)
+    expect(mapped.unwrapErr()).toBeInstanceOf(ValidationError)
+  }
+})
+
+// Tests for paginatedSerialize
+
+test("ResultUtils.paginatedSerialize - serializes paginated result with successful items", () => {
+  const mockItems = [
+    { serialize: () => Result.Ok({ id: 1, name: "Item 1" }) },
+    { serialize: () => Result.Ok({ id: 2, name: "Item 2" }) },
+  ]
+
+  const paginatedData: Paginated<(typeof mockItems)[0]> = {
+    items: mockItems,
+    totalCount: 2,
+    page: 1,
+    limit: 10,
+    totalPages: 1,
+    hasNext: false,
+    hasPrevious: false,
+  }
+
+  const result = ResultUtils.paginatedSerialize(paginatedData)
+
+  expect(result.isOk()).toBe(true)
+  const serialized = result.unwrap()
+  expect(serialized.items).toEqual([
+    { id: 1, name: "Item 1" },
+    { id: 2, name: "Item 2" },
+  ])
+  expect(serialized.totalCount).toBe(2)
+  expect(serialized.page).toBe(1)
+})
+
+test("ResultUtils.paginatedSerialize - handles ParseErrors in items", () => {
+  // Generate a real ParseError using schema validation
+  const failingResult = S.decodeUnknownEither(S.String)(123) // This will fail
+
+  expect(failingResult._tag).toBe("Left")
+
+  if (failingResult._tag === "Left") {
+    const mockItems = [
+      { serialize: () => Result.Ok({ id: 1, name: "Item 1" }) },
+      { serialize: () => Result.Err(failingResult.left) },
+    ]
+
+    const paginatedData: Paginated<(typeof mockItems)[0]> = {
+      items: mockItems,
+      totalCount: 2,
+      page: 1,
+      limit: 10,
+      totalPages: 1,
+      hasNext: false,
+      hasPrevious: false,
+    }
+
+    const result = ResultUtils.paginatedSerialize(paginatedData)
+
+    expect(result.isErr()).toBe(true)
+    expect(result.unwrapErr()).toBeInstanceOf(ValidationError)
+  }
 })

@@ -1,6 +1,6 @@
-import { describe, test, expect } from "bun:test"
+import { describe, expect, test } from "bun:test"
+import { validateWithEffect } from "@application/utils/validation.utils"
 import { Schema as S } from "effect"
-import { validateWithEffect } from "../src/utils/validation.utils"
 
 describe("Validation Utils", () => {
   const testSchema = S.Struct({

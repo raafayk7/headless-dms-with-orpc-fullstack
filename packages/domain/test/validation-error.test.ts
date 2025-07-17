@@ -1,10 +1,11 @@
 import { describe, expect, it } from "bun:test"
-import { GroceryListCreateSchema, ValidationError } from "@repo/domain"
-import { Schema as S } from "effect"
+import { GroceryListCreateSchema } from "@domain/grocery-list/grocery-list.entity"
+import { ValidationError } from "@domain/utils/base.errors"
 import {
   parseErrorsToValidationError,
   validationErrorsToSingle,
-} from "../src/utils/validation-error.utils"
+} from "@domain/utils/valdidation.utils"
+import { Schema as S } from "effect"
 
 describe("Validation Error Utils", () => {
   describe("parseErrorsToValidationError", () => {

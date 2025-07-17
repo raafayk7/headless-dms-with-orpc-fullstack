@@ -1,4 +1,3 @@
-import { isPromise } from "node:util/types"
 import { Result } from "@carbonteq/fp/result"
 import { Cause, Effect, Either, Option } from "effect"
 import type { ParseError } from "effect/ParseResult"

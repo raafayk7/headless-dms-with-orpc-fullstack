@@ -1,8 +1,8 @@
 import { Option } from "@carbonteq/fp"
 import { DateTime as DT, ParseResult, Schema as S } from "effect"
+import type { Brand } from "effect/Brand"
 import type { JSONSchema7 } from "json-schema"
 import { addMethodsToSchema, createEncoderDecoderBridge } from "./schema-utils"
-import type { Brand } from "effect/Brand"
 
 export const UUIDBase = S.asSchema(
   S.UUID.pipe(S.brand("UUID")).annotations({

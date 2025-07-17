@@ -3,7 +3,7 @@ import {
   calculateOffset,
   createPaginatedResult,
   PaginationParamsSchema,
-} from "../src/utils/pagination.utils"
+} from "@application/utils/pagination.utils"
 
 describe("Pagination Utils", () => {
   describe("PaginationParamsSchema", () => {

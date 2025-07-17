@@ -1,4 +1,5 @@
 import type { CreateGroceryListDto } from "@application/dtos/grocery-list.dto"
+import type { DashboardStats } from "@application/schemas/dashboard"
 import { ApplicationResult } from "@application/utils/application-result.utils"
 import { Result } from "@carbonteq/fp"
 import type { GroceryListType } from "@domain/grocery-list/grocery-list.entity"
@@ -9,8 +10,6 @@ import {
 import type {
   GetListsParams,
   GetListsResult,
-  GroceryListEncoded,
-  NewGroceryListData,
 } from "@domain/grocery-list/grocery-list.schemas"
 import { GroceryListService } from "@domain/grocery-list/grocery-list.service"
 import { ItemRepository } from "@domain/grocery-list-item/item.repository"
@@ -18,7 +17,6 @@ import type { UserEntity } from "@domain/user/user.entity"
 import { ResultUtils } from "@domain/utils/fp-utils"
 import { DateTime as DT } from "effect"
 import { autoInjectable } from "tsyringe"
-import type { DashboardStats } from "@application/schemas/dashboard"
 
 const sevenDaysAgo = () => {
   const date = new Date()
