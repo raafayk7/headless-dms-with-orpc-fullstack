@@ -33,9 +33,9 @@ export type UUIDEncoded = S.Schema.Encoded<typeof UUID>
 
 const DateTimeBase = S.asSchema(
   S.Union(
+    S.DateTimeUtcFromDate,
     S.DateTimeUtcFromNumber,
     S.DateTimeUtc,
-    S.DateTimeUtcFromDate,
     S.DateTimeUtcFromSelf,
   ).annotations({
     title: "DateTime",
