@@ -1,5 +1,6 @@
-import type { ParseError } from "effect/ParseResult"
+import type { ParseError, ParseIssue } from "effect/ParseResult"
 import { ValidationError, type ValidationIssue } from "./base.errors"
+import { getTitleAnnotation, getDescriptionAnnotation } from "effect/SchemaAST"
 
 export const mergeValidationErrors = (
   errors: ValidationError[],
@@ -23,7 +24,7 @@ export function parseErrorsToValidationError(
 export const parseErrorToValidationError = (
   error: ParseError,
 ): ValidationError => {
-  const issues = parseErrorToIssues(error)
+  const issues = getIssuesFromParseErrorIssues(error.issue)
   return ValidationError.multiple(issues)
 }
 
@@ -35,6 +36,58 @@ function parseErrorToIssues(parseError: ParseError): ValidationIssue[] {
   return issues
 }
 
+export const getIssuesFromParseErrorIssues = (
+  issue: ParseIssue,
+): ValidationIssue[] => {
+  switch (issue._tag) {
+    case "Type": {
+      let expectedType = "nothing"
+      const descAnnot = getDescriptionAnnotation(issue.ast)
+      if (descAnnot._tag === "Some") {
+        expectedType = descAnnot.value
+      }
+      return [
+        {
+          message:
+            issue.message ||
+            `TypeError: Expected ${expectedType}, got ${typeof issue.actual}`,
+          // cause: issue,
+          value: issue.actual,
+        },
+      ]
+    }
+    case "Missing": {
+      return [
+        {
+          message: issue.message || "Missing field",
+          // cause: issue,
+          value: issue.actual,
+        },
+      ]
+    }
+    case "Pointer": {
+      const innerIssues = getIssuesFromParseErrorIssues(issue.issue)
+      const path = issue.path as string
+      for (const innerIssue of innerIssues) {
+        innerIssue.path = [path, ...(innerIssue.path || [])]
+      }
+
+      return innerIssues
+    }
+    case "Composite": {
+      // @ts-expect-error not an iterator
+      const issueArr = Array.from(issue.issues)
+      const innerIssues = issueArr.flatMap(getIssuesFromParseErrorIssues)
+
+      return innerIssues
+    }
+
+    default: {
+      throw new Error(`Not implemented issue type: ${issue._tag}`)
+    }
+  }
+}
+
 function collectIssuesFromParseError(
   error: ParseError,
   currentPath: string[],
@@ -42,10 +95,10 @@ function collectIssuesFromParseError(
 ): void {
   // ParseError has a _tag field that indicates the type of error
   // We need to use unknown type to access the internal structure
+  const issue = error.issue
   const errorRecord = error as unknown as Record<string, unknown>
-  const tag = errorRecord._tag as string
 
-  switch (tag) {
+  switch (issue._tag) {
     case "Type": {
       issues.push({
         message: error.message,
@@ -62,47 +115,6 @@ function collectIssuesFromParseError(
         field: pathToFieldName(currentPath),
         path: [...currentPath],
       })
-      break
-    }
-
-    case "Union": {
-      const unionErrors = (errorRecord.errors as ParseError[]) || []
-      for (const unionError of unionErrors) {
-        collectIssuesFromParseError(unionError, currentPath, issues)
-      }
-      break
-    }
-
-    case "Tuple":
-    case "TypeLiteral": {
-      const elementErrors = (errorRecord.errors as ParseError[]) || []
-      for (const elementError of elementErrors) {
-        const elementPath = extractPathFromError(elementError)
-        const newPath = elementPath
-          ? [...currentPath, ...elementPath]
-          : currentPath
-        collectIssuesFromParseError(elementError, newPath, issues)
-      }
-      break
-    }
-
-    case "Index": {
-      const index = errorRecord.index as number
-      const indexError = errorRecord.error as ParseError
-      if (indexError) {
-        const newPath = [...currentPath, String(index)]
-        collectIssuesFromParseError(indexError, newPath, issues)
-      }
-      break
-    }
-
-    case "Key": {
-      const key = errorRecord.key as string
-      const keyError = errorRecord.error as ParseError
-      if (keyError) {
-        const newPath = [...currentPath, String(key)]
-        collectIssuesFromParseError(keyError, newPath, issues)
-      }
       break
     }
 

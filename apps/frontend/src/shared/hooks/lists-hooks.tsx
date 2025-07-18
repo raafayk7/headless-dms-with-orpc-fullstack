@@ -8,6 +8,7 @@ import {
 } from "@tanstack/react-query"
 import { toast } from "../toast"
 import { useNavigate, type UseNavigateResult } from "@tanstack/react-router"
+import { isDefinedError } from "@orpc/client"
 
 type Params = {
   limit?: number
@@ -53,10 +54,16 @@ export const useNewListMutation = () => {
 
   const mutOpts =
     orpc.authenticated.groceryList.createGroceryList.mutationOptions({
+      throwOnError: false,
       onError: (err) => {
+        if (isDefinedError(err)) {
+          console.debug("defined error")
+        } else {
+          console.debug("undefined error")
+        }
         toast.error({
-          message: err.message,
           title: "Failed to create grocery list",
+          message: err.message,
         })
       },
       onSuccess: async (data) => {

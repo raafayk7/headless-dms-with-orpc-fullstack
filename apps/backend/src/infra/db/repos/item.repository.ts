@@ -16,7 +16,7 @@ import {
 } from "@domain/grocery-list-item/item.repository"
 import type { RepoResult, RepoUnitResult } from "@domain/utils"
 import { DateTime } from "@domain/utils/refined-types"
-import { parseErrorToValidationError } from "@domain/utils/valdidation.utils"
+import { parseErrorToValidationError } from "@domain/utils/valididation.utils"
 import { and, eq, gte } from "drizzle-orm"
 import { injectable } from "tsyringe"
 import type { AppDatabase } from "../conn"

@@ -1,7 +1,7 @@
 import type { Result } from "@carbonteq/fp"
 import type { ValidationError } from "@domain/utils/base.errors"
 import { eitherToResult } from "@domain/utils/fp-utils"
-import { parseErrorToValidationError } from "@domain/utils/valdidation.utils"
+import { parseErrorToValidationError } from "@domain/utils/valididation.utilsss"
 import type { StandardSchemaV1 } from "@standard-schema/spec"
 import { Schema as S } from "effect"
 import type { AST } from "effect/SchemaAST"
@@ -16,7 +16,12 @@ export const validateWithEffect = <In, Out>(
       onExcessProperty: "ignore",
       exact: true,
     }),
-  ).mapErr(parseErrorToValidationError)
+  ).mapErr((parseError) => {
+    console.debug("parse errors", parseError)
+    console.debug(parseError.issue)
+
+    return parseErrorToValidationError(parseError)
+  })
 }
 
 type DtoSchemaInput<T, Out, In, Ctx> = {
@@ -85,6 +90,8 @@ export const dtoStandardSchema = <T, Out, In, Ctx>(
           } satisfies StandardSchemaV1.SuccessResult<T>
 
         const err = result.unwrapErr()
+        console.debug("unwraooed err", err)
+        console.debug("err issues", err.issues)
         const issues = err.issues.map(
           (issue) =>
             ({

@@ -8,7 +8,7 @@ import { Schema as S } from "effect"
 import { GroceryListOwnershipError } from "./grocery-list.errors"
 
 export const GroceryListSchema = defineEntityStruct("GroceryListId", {
-  name: S.String.pipe(S.minLength(1)),
+  name: S.String.pipe(S.minLength(3)),
   description: S.String,
   active: S.Boolean,
   ownerId: UserSchema.id,
