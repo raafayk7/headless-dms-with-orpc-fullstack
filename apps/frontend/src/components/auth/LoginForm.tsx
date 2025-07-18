@@ -1,11 +1,9 @@
 import { useAppForm } from "@app/shared/hooks/app-form"
 import { useLoginMutation } from "@app/shared/hooks/auth-hooks"
+import { loginFormSchema } from "@app/shared/schemas/auth"
 import { toast } from "@app/shared/toast"
 import { Card, Divider, Stack, Text, Title } from "@mantine/core"
-import { type } from "arktype"
 import AnchorLink from "../layout/AnchorLink"
-
-const formSchema = type({ email: "string.email", password: "string" })
 
 type LoginFormProps = {
   onLoginSuccess: () => Promise<void>
@@ -16,7 +14,7 @@ const LoginForm = ({ onLoginSuccess }: LoginFormProps) => {
 
   const form = useAppForm({
     defaultValues: { email: "", password: "" },
-    validators: { onSubmit: formSchema },
+    validators: { onSubmit: loginFormSchema },
 
     onSubmit: async ({ value }) => {
       await loginMut.mutateAsync(value, {

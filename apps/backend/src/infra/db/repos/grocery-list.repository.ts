@@ -62,6 +62,8 @@ export class DrizzleGroceryListRepository extends GroceryListRepository {
 
     const res = await encoded
       .map(async ([listData, itemsData]) => {
+        console.debug("List data", listData)
+        console.debug("Items data", itemsData)
         await this.db.transaction(async (tx) => {
           await tx.insert(groceryLists).values({
             ...listData,
@@ -69,14 +71,15 @@ export class DrizzleGroceryListRepository extends GroceryListRepository {
             userId: list.ownerId,
           })
 
-          await tx.insert(groceryListItems).values(
-            itemsData.map((itemEncoded) => ({
-              ...itemEncoded,
-              id: itemEncoded.id,
-              listId: list.id,
-              createdBy: list.ownerId,
-            })),
-          )
+          if (itemsData.length > 0)
+            await tx.insert(groceryListItems).values(
+              itemsData.map((itemEncoded) => ({
+                ...itemEncoded,
+                id: itemEncoded.id,
+                listId: list.id,
+                createdBy: list.ownerId,
+              })),
+            )
         })
 
         return list

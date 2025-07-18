@@ -1,17 +1,22 @@
-class Abc {
-  constructor(private readonly abc: string) {}
+import {
+  dtoStandardSchema,
+  simpleSchemaDto,
+} from "@application/utils/validation.utils"
+import { Schema as S } from "effect"
+import { z } from "zod/v4"
 
-  method() {
-    return "4"
-  }
+const zodSchema = z.object({ foo: z.string().min(1) })
+const zodStandardSchema = zodSchema["~standard"]
 
-  static bar() {
-    return "3"
-  }
+console.debug(zodStandardSchema)
 
-  get ab() {
-    return false
-  }
-}
+const effectSchema = S.Struct({ bar: S.String.pipe(S.minLength(1)) })
+const effectStandardSchema = S.standardSchemaV1(effectSchema)["~standard"]
 
-console.debug(Object.keys(new Abc("test")))
+console.debug(effectStandardSchema)
+
+class mySchema extends simpleSchemaDto("mySchema", effectSchema) {}
+
+const mySchemaStandard = dtoStandardSchema(mySchema)["~standard"]
+
+console.debug(mySchemaStandard)

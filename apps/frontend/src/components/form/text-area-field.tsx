@@ -1,19 +1,19 @@
 import { useFieldContext } from "@app/shared/contexts/form-context"
-import { TextInput, type TextInputProps } from "@mantine/core"
+import { Textarea, type TextareaProps } from "@mantine/core"
 
-export interface TextFieldProps extends TextInputProps {}
+export interface TextAreaFieldProps extends TextareaProps {}
 
-const TextField = ({
+const TextAreaField = ({
   radius = "md",
   labelProps = {},
   ...rest
-}: TextFieldProps) => {
+}: TextAreaFieldProps) => {
   const field = useFieldContext<string>()
   const isInvalid = !field.state.meta.isValid
   const errMsg = field.state.meta.errors.join(", ")
 
   return (
-    <TextInput
+    <Textarea
       aria-errormessage={errMsg}
       aria-invalid={isInvalid}
       error={errMsg}
@@ -23,10 +23,9 @@ const TextField = ({
       onChange={(e) => field.handleChange(e.target.value)}
       radius={radius}
       value={field.state.value}
-      withErrorStyles={true}
       {...rest}
     />
   )
 }
 
-export default TextField
+export default TextAreaField

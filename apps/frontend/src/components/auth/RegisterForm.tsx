@@ -1,16 +1,9 @@
 import { useAppForm } from "@app/shared/hooks/app-form"
 import { useRegisterMutation } from "@app/shared/hooks/auth-hooks"
+import { registerFormSchema } from "@app/shared/schemas/auth"
 import { toast } from "@app/shared/toast"
 import { Card, Divider, Stack, Text, Title } from "@mantine/core"
-import { type } from "arktype"
 import AnchorLink from "../layout/AnchorLink"
-
-// const formSchema = NewUserSchema
-const formSchema = type({
-  name: "string >= 1",
-  email: "string.email",
-  password: "string >= 6",
-})
 
 type RegisterFormProps = {
   onRegisterSuccess: () => Promise<void>
@@ -21,7 +14,7 @@ const RegisterForm = ({ onRegisterSuccess }: RegisterFormProps) => {
 
   const form = useAppForm({
     defaultValues: { name: "", email: "", password: "" },
-    validators: { onSubmit: formSchema },
+    validators: { onSubmit: registerFormSchema },
 
     onSubmit: async ({ value }) => {
       await registerMut.mutateAsync(value, {

@@ -1,5 +1,7 @@
 import { useAppForm } from "@app/shared/hooks/app-form"
+import { useNewListMutation } from "@app/shared/hooks/lists-hooks"
 import { orpc } from "@app/shared/orpc"
+import { newGroceryListFormSchema } from "@app/shared/schemas/list"
 import { toast } from "@app/shared/toast"
 import {
   Button,
@@ -11,47 +13,18 @@ import {
   Text,
   Title,
 } from "@mantine/core"
-import { useQueryClient } from "@tanstack/react-query"
-import { Link, useNavigate } from "@tanstack/react-router"
-import { type } from "arktype"
+import { Link } from "@tanstack/react-router"
 import { ArrowLeft } from "lucide-react"
 
-const formSchema = type({
-  name: "string>=1",
-  description: "string",
-  items: type({}).array(),
-})
-
 export const NewListPage = () => {
-  const navigate = useNavigate()
-  const queryClient = useQueryClient()
+  const newListMut = useNewListMutation()
 
   const form = useAppForm({
     defaultValues: { name: "", description: "", items: [] },
-    validators: { onSubmit: formSchema },
+    validators: { onSubmit: newGroceryListFormSchema },
 
     onSubmit: async ({ value }) => {
-      try {
-        const res = await orpc.authenticated.groceryList.createGroceryList.call(
-          {
-            name: value.name,
-            description: value.description,
-          },
-        )
-
-        toast.success({ message: "List created successfully!" })
-
-        queryClient.invalidateQueries({
-          queryKey: ["groceryList", "getLists"],
-        })
-
-        navigate({ to: "/lists" })
-      } catch (error) {
-        toast.error({
-          message: "Failed to create list",
-          title: "Error",
-        })
-      }
+      await newListMut.mutateAsync(value)
     },
   })
 
@@ -108,7 +81,7 @@ export const NewListPage = () => {
 
                 <form.AppField name="description">
                   {(field) => (
-                    <field.TextareaField
+                    <field.TextAreaField
                       disabled={isSubmitting}
                       label="Description"
                       placeholder="Optional description for this list..."

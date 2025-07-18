@@ -6,8 +6,8 @@ import { DashboardStatsSchema } from "@application/schemas/dashboard"
 import { dtoStandardSchema } from "@application/utils/validation.utils"
 import { appAuthenticatedBase } from "@contract/utils/oc.base"
 import {
+  GroceryListCreateSchema,
   GroceryListId,
-  GroceryListUpdateSchema,
 } from "@domain/grocery-list/grocery-list.entity"
 import {
   GetListsParamsSchema,
@@ -87,6 +87,7 @@ export const updateGroceryList = groceryListBase
     inputStructure: "detailed",
   })
   .input(dtoStandardSchema(UpdateGroceryListDto))
+  // .input(S.standardSchemaV1(GroceryListCreateSchema))
   .output(S.standardSchemaV1(GroceryListDetailsSchema))
 
 export const deleteGroceryList = groceryListBase

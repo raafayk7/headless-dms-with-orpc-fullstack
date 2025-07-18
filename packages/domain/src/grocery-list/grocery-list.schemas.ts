@@ -30,6 +30,9 @@ export const NewGroceryListSchema = GroceryListCreateSchema.pipe(
   ),
 )
 export type NewGroceryListData = S.Schema.Type<typeof NewGroceryListSchema>
+export type NewGroceryListEncoded = S.Schema.Encoded<
+  typeof NewGroceryListSchema
+>
 
 export const GetListsParamsSchema = PaginationParamsSchema.pipe(
   S.extend(
