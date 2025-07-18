@@ -1,7 +1,7 @@
 import type { Result } from "@carbonteq/fp"
 import type { ValidationError } from "@domain/utils/base.errors"
 import { eitherToResult } from "@domain/utils/fp-utils"
-import { parseErrorToValidationError } from "@domain/utils/valididation.utilsss"
+import { parseErrorToValidationError } from "@domain/utils/valididation.utils"
 import type { StandardSchemaV1 } from "@standard-schema/spec"
 import { Schema as S } from "effect"
 import type { AST } from "effect/SchemaAST"

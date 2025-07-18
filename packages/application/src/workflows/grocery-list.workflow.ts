@@ -17,7 +17,7 @@ import type {
 import { GroceryListService } from "@domain/grocery-list/grocery-list.service"
 import { ItemRepository } from "@domain/grocery-list-item/item.repository"
 import type { UserEntity } from "@domain/user/user.entity"
-import { ResultUtils } from "@domain/utils/fp-utils"
+import { FpUtils } from "@domain/utils/fp-utils"
 import { DateTime as DT } from "effect"
 import { autoInjectable } from "tsyringe"
 
@@ -62,9 +62,9 @@ export class GroceryListWorkflows {
   async fetchGroceryListsForUser(user: UserEntity) {
     const lists = await this.groceryListRepo.findByUserId(user.id)
     const encoded = lists.flatMap((lists) => {
-      const serialized = lists.map(ResultUtils.serialized)
+      const serialized = lists.map(FpUtils.serialized)
 
-      return ResultUtils.mapParseErrors(serialized)
+      return FpUtils.mapParseErrors(serialized)
     })
 
     return ApplicationResult.fromResult(encoded)
@@ -72,7 +72,7 @@ export class GroceryListWorkflows {
 
   private async fetchWithFilters(filters: GroceryListFindFilters) {
     const lists = await this.groceryListRepo.findWithFilters(filters)
-    const encoded = lists.flatMap(ResultUtils.paginatedSerialize)
+    const encoded = lists.flatMap(FpUtils.paginatedSerialize)
 
     return ApplicationResult.fromResult(encoded)
   }

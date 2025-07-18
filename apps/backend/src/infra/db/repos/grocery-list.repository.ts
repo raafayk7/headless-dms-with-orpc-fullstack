@@ -2,7 +2,6 @@ import { Result as R } from "@carbonteq/fp"
 import type {
   GroceryListEntity,
   GroceryListType,
-  GroceryListUpdateData,
 } from "@domain/grocery-list/grocery-list.entity"
 import { GroceryListEntity as GList } from "@domain/grocery-list/grocery-list.entity"
 import { GroceryListNotFoundError } from "@domain/grocery-list/grocery-list.errors"
@@ -13,11 +12,7 @@ import {
 } from "@domain/grocery-list/grocery-list.repository"
 import type { ItemEntity } from "@domain/grocery-list-item"
 import type { UserType } from "@domain/user/user.entity"
-import {
-  type RepoResult,
-  type RepoUnitResult,
-  ResultUtils,
-} from "@domain/utils"
+import { FpUtils, type RepoResult, type RepoUnitResult } from "@domain/utils"
 import {
   calculateOffset,
   createPaginatedResult,
@@ -54,10 +49,10 @@ export class DrizzleGroceryListRepository extends GroceryListRepository {
     list: GroceryListEntity,
     items: ItemEntity[],
   ): Promise<RepoResult<GroceryListEntity>> {
-    const encoded = ResultUtils.serialized(list).flatZip(() => {
-      const itemsEncoded = items.map(ResultUtils.serializedPreserveId)
+    const encoded = FpUtils.serialized(list).flatZip(() => {
+      const itemsEncoded = items.map(FpUtils.serializedPreserveId)
 
-      return ResultUtils.collectValidationErrors(itemsEncoded)
+      return FpUtils.collectValidationErrors(itemsEncoded)
     })
 
     const res = await encoded
