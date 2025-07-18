@@ -34,9 +34,8 @@ export abstract class GroceryListRepository {
     id: GroceryListType["id"],
   ): Promise<RepoResult<GroceryListEntity, GroceryListNotFoundError>>
   abstract update(
-    id: GroceryListType["id"],
-    updates: GroceryListUpdateData,
-  ): Promise<void>
+    list: GroceryListEntity,
+  ): Promise<RepoResult<GroceryListEntity, GroceryListNotFoundError>>
   abstract delete(
     id: GroceryListType["id"],
   ): Promise<RepoUnitResult<GroceryListNotFoundError>>

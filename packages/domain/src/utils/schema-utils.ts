@@ -1,6 +1,8 @@
 import { Result } from "@carbonteq/fp"
 import { Either, Schema as S, type SchemaAST } from "effect"
 import type { ParseError } from "effect/ParseResult"
+import type { ValidationError } from "./base.errors"
+import { parseErrorToValidationError } from "./valdidation.utils"
 
 // From https://effect.website/docs/schema/basic-usage/#simplifying-tagged-structs-with-taggedstruct
 // Allows the absence of _tag in decode ops
@@ -31,7 +33,7 @@ export const encodeToResult = <In, Out>(
   value: Out,
 ) =>
   Either.match(S.encodeEither(schema, encodeDecodeOpts)(value), {
-    onLeft: Result.Err,
+    onLeft: (err) => Result.Err(parseErrorToValidationError(err)),
     onRight: Result.Ok,
   })
 
@@ -40,7 +42,7 @@ export const decodeUnknownToResult = <In, Out>(
   value: Out,
 ) =>
   Either.match(S.decodeUnknownEither(schema, encodeDecodeOpts)(value), {
-    onLeft: Result.Err,
+    onLeft: (err) => Result.Err(parseErrorToValidationError(err)),
     onRight: Result.Ok,
   })
 
@@ -50,15 +52,15 @@ export const createEncoderDecoderBridge = <TIn, TOut>(
   const encoder = S.encodeEither(schema, encodeDecodeOpts)
   const decoder = S.decodeUnknownEither(schema, encodeDecodeOpts)
 
-  const serialize = (value: TOut): Result<TIn, ParseError> =>
+  const serialize = (value: TOut): Result<TIn, ValidationError> =>
     Either.match(encoder(value), {
-      onLeft: Result.Err,
+      onLeft: (err) => Result.Err(parseErrorToValidationError(err)),
       onRight: Result.Ok,
     })
 
-  const deserialize = (value: unknown): Result<TOut, ParseError> =>
+  const deserialize = (value: unknown): Result<TOut, ValidationError> =>
     Either.match(decoder(value), {
-      onLeft: Result.Err,
+      onLeft: (err) => Result.Err(parseErrorToValidationError(err)),
       onRight: Result.Ok,
     })
 

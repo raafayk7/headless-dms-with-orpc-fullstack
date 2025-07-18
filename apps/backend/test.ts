@@ -1,11 +1,17 @@
-import { OpenAPIGenerator } from "@orpc/openapi"
-import { ZodToJsonSchemaConverter } from "@orpc/zod"
-import { router } from "@/web/router"
+class Abc {
+  constructor(private readonly abc: string) {}
 
-const generator = new OpenAPIGenerator({
-  schemaConverters: [new ZodToJsonSchemaConverter()],
-})
+  method() {
+    return "4"
+  }
 
-const specs = await generator.generate(router, {})
+  static bar() {
+    return "3"
+  }
 
-console.log("Specs", specs)
+  get ab() {
+    return false
+  }
+}
+
+console.debug(Object.keys(new Abc("test")))

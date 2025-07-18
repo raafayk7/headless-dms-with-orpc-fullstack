@@ -1,6 +1,9 @@
-import { CreateGroceryListDto } from "@application/dtos/grocery-list.dto"
+import {
+  CreateGroceryListDto,
+  UpdateGroceryListDto,
+} from "@application/dtos/grocery-list.dto"
 import { DashboardStatsSchema } from "@application/schemas/dashboard"
-import { dtoSchema } from "@application/utils/validation.utils"
+import { dtoStandardSchema } from "@application/utils/validation.utils"
 import { appAuthenticatedBase } from "@contract/utils/oc.base"
 import {
   GroceryListId,
@@ -72,7 +75,7 @@ export const createGroceryList = groceryListBase
     summary: "Create a new grocery list",
     tags: ["grocery-list"],
   })
-  .input(dtoSchema(CreateGroceryListDto))
+  .input(dtoStandardSchema(CreateGroceryListDto))
   .output(S.standardSchemaV1(GroceryListDetailsSchema))
 
 export const updateGroceryList = groceryListBase
@@ -83,17 +86,8 @@ export const updateGroceryList = groceryListBase
     tags: ["grocery-list"],
     inputStructure: "detailed",
   })
-  .input(
-    S.standardSchemaV1(
-      S.Struct({
-        params: S.Struct({
-          id: GroceryListId,
-        }),
-        body: GroceryListUpdateSchema,
-      }),
-    ),
-  )
-  .output(S.standardSchemaV1(GetListsResultSchema))
+  .input(dtoStandardSchema(UpdateGroceryListDto))
+  .output(S.standardSchemaV1(GroceryListDetailsSchema))
 
 export const deleteGroceryList = groceryListBase
   .route({

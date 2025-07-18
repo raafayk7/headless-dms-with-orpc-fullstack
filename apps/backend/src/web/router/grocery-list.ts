@@ -30,17 +30,20 @@ const getStatsHandler = base.getStats.handler(async ({ context }) => {
 })
 
 const createGroceryHandler = base.createGroceryList.handler(
-  async ({ input, context }) => {
+  async ({ input: dto, context }) => {
     const groceryListFlows = container.resolve(GroceryListWorkflows)
-    const result = await groceryListFlows.createGroceryList(input, context.user)
+    const result = await groceryListFlows.createGroceryList(dto, context.user)
 
     return handleAppResult(result)
   },
 )
 
 const updateGroceryHandler = base.updateGroceryList.handler(
-  async ({ input, context }) => {
-    throw new Error("Not implemented yet")
+  async ({ input: dto, context }) => {
+    const groceryListFlows = container.resolve(GroceryListWorkflows)
+    const result = await groceryListFlows.updateGroceryList(dto, context.user)
+
+    return handleAppResult(result)
   },
 )
 

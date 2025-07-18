@@ -16,14 +16,17 @@
     "oxlint": "catalog:",
     "prettier": "catalog:",
     "taze": "catalog:",
-    "turbo": "^2.5.4",
+    "turbo": "^2.5.5",
     "typescript": "catalog:"
   },
   "engines": {
     "bun": ">=1.2.16"
   },
   "workspaces": {
-    "packages": ["packages/*", "apps/*"],
+    "packages": [
+      "packages/*",
+      "apps/*"
+    ],
     "catalog": {
       "typescript": "^5.8.3",
       "@types/bun": "^1.2.15",

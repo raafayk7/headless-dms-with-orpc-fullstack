@@ -1,17 +1,24 @@
-import { validateWithEffect } from "@application/utils/validation.utils"
-import type { Result } from "@carbonteq/fp"
+import { simpleSchemaDto } from "@application/utils/validation.utils"
 import {
-  type NewGroceryListData,
+  GroceryListSchema,
+  GroceryListUpdateSchema,
+} from "@domain/grocery-list/grocery-list.entity"
+import { NewGroceryListSchema } from "@domain/grocery-list/grocery-list.schemas"
+import { Schema as S } from "effect"
+
+export class CreateGroceryListDto extends simpleSchemaDto(
+  "CreateGroceryListDto",
   NewGroceryListSchema,
-} from "@domain/grocery-list/grocery-list.schemas"
-import type { ValidationError } from "@domain/utils/base.errors"
+) {}
 
-export class CreateGroceryListDto {
-  private constructor(readonly data: NewGroceryListData) {}
+const UpdateGroceryListDtoSchema = S.Struct({
+  params: S.Struct({
+    id: GroceryListSchema.id,
+  }),
+  body: GroceryListUpdateSchema,
+})
 
-  static create(data: unknown): Result<CreateGroceryListDto, ValidationError> {
-    return validateWithEffect(NewGroceryListSchema, data).map(
-      (validatedData) => new CreateGroceryListDto(validatedData),
-    )
-  }
-}
+export class UpdateGroceryListDto extends simpleSchemaDto(
+  "UpdateGroceryListDto",
+  UpdateGroceryListDtoSchema,
+) {}

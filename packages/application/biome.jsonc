@@ -3,7 +3,7 @@
   "root": false,
   "files": {
     "includes": [
-      "src/**/*.{js,ts,json}",
+      "src/**/*.ts",
       "test/**/*.ts",
       "./*.ts",
       "package.json",

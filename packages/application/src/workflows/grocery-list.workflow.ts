@@ -1,4 +1,7 @@
-import type { CreateGroceryListDto } from "@application/dtos/grocery-list.dto"
+import {
+  CreateGroceryListDto,
+  UpdateGroceryListDto,
+} from "@application/dtos/grocery-list.dto"
 import type { DashboardStats } from "@application/schemas/dashboard"
 import { ApplicationResult } from "@application/utils/application-result.utils"
 import { Result } from "@carbonteq/fp"
@@ -137,10 +140,23 @@ export class GroceryListWorkflows {
     return ApplicationResult.fromResult(Result.Ok(stats))
   }
 
-  async updateGroceryList(
-    _request: unknown, // UpdateGroceryListDto - not implemented yet
-  ): Promise<ApplicationResult<unknown>> {
-    return ApplicationResult.Err(new Error("Not implemented yet"))
+  async updateGroceryList({ data }: UpdateGroceryListDto, user: UserEntity) {
+    const list = await this.groceryListRepo.findById(data.params.id)
+
+    const result = await list
+      .flatMap((existingList) =>
+        GroceryListService.updateGroceryList(existingList, data.body, user),
+      )
+      .flatMap(
+        async (updatedList) => await this.groceryListRepo.update(updatedList),
+      )
+      .flatZip(async (list) => await this.groceryItemsRepo.findByList(list))
+      .flatMap(([list, items]) =>
+        GroceryListService.processListDetails(list, user, items),
+      )
+      .toPromise()
+
+    return ApplicationResult.fromResult(result)
   }
 
   async deleteGroceryList(_listId: string): Promise<ApplicationResult<void>> {

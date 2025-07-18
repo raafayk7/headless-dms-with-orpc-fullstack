@@ -11,7 +11,7 @@ import {
   type GroceryListFindFilters,
   GroceryListRepository,
 } from "@domain/grocery-list/grocery-list.repository"
-import type { ItemEncoded, ItemEntity } from "@domain/grocery-list-item"
+import type { ItemEntity } from "@domain/grocery-list-item"
 import type { UserType } from "@domain/user/user.entity"
 import {
   type RepoResult,
@@ -54,9 +54,11 @@ export class DrizzleGroceryListRepository extends GroceryListRepository {
     list: GroceryListEntity,
     items: ItemEntity[],
   ): Promise<RepoResult<GroceryListEntity>> {
-    const encoded = ResultUtils.encoded(list).flatZip(() =>
-      ResultUtils.mapParseErrors(items.map(ResultUtils.serializedPreserveId)),
-    )
+    const encoded = ResultUtils.serialized(list).flatZip(() => {
+      const itemsEncoded = items.map(ResultUtils.serializedPreserveId)
+
+      return ResultUtils.collectValidationErrors(itemsEncoded)
+    })
 
     const res = await encoded
       .map(async ([listData, itemsData]) => {
@@ -103,16 +105,27 @@ export class DrizzleGroceryListRepository extends GroceryListRepository {
   }
 
   async update(
-    id: GroceryListType["id"],
-    updates: GroceryListUpdateData,
-  ): Promise<void> {
-    await this.db
-      .update(groceryLists)
-      .set({
-        ...updates,
-        updatedAt: DateTime.now(),
+    list: GroceryListEntity,
+  ): Promise<RepoResult<GroceryListEntity, GroceryListNotFoundError>> {
+    const r = await list
+      .updateData()
+      .map(
+        async (updateData) =>
+          await this.db
+            .update(groceryLists)
+            .set(updateData)
+            .where(eq(groceryLists.id, list.id))
+            .returning(),
+      )
+      .flatMap((updatedEntityData) => {
+        const data = updatedEntityData[0]
+        if (!data) return R.Err(new GroceryListNotFoundError(list.id))
+
+        return mapper.mapOne(data)
       })
-      .where(eq(groceryLists.id, id))
+      .toPromise()
+
+    return r
   }
 
   async delete(

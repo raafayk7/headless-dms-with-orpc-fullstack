@@ -1,7 +1,7 @@
 import { Result } from "@carbonteq/fp/result"
 import { Cause, Effect, Either, Option } from "effect"
 import type { ParseError } from "effect/ParseResult"
-import type { ValidationError } from "./base.errors"
+import { ValidationError } from "./base.errors"
 import type { Paginated } from "./pagination.utils"
 import {
   parseErrorsToValidationError,
@@ -80,13 +80,23 @@ type WithSerialize<T> = {
   serialize: () => T
 }
 
-type WithSerializeResult<T> = {
-  serialize: () => Result<T, ParseError>
-}
-
 type WithSerializeAndId<T, Id> = {
   id: Id
-  serialize: () => Result<T, ParseError>
+  serialize: () => Result<T, ValidationError>
+}
+
+function collectValidationErrors<T>(
+  results: Result<Promise<T>, ValidationError>[],
+): never
+function collectValidationErrors<T>(
+  results: Result<T, ValidationError>[],
+): Result<T[], ValidationError>
+function collectValidationErrors<T>(results: Result<T, ValidationError>[]) {
+  return Result.all(...results).mapErr((errors) => {
+    const allIssues = errors.flatMap((e) => e.issues)
+
+    return ValidationError.multiple(allIssues, { cause: errors })
+  })
 }
 
 export const ResultUtils = {
@@ -96,36 +106,35 @@ export const ResultUtils = {
   effectToResult,
   effectToResultAsync,
   serialized: <T>(obj: WithSerialize<T>): T => obj.serialize(),
-
   serializedPreserveId: <T, Id>(
     obj: WithSerializeAndId<T, Id>,
-  ): Result<Omit<T, "id"> & { id: Id }, ParseError> =>
+  ): Result<Omit<T, "id"> & { id: Id }, ValidationError> =>
     obj.serialize().map((data) => ({ ...data, id: obj.id })),
-  encoded: <T>(obj: WithSerializeResult<T>): Result<T, ValidationError> =>
-    obj.serialize().mapErr(parseErrorToValidationError),
+
   pick:
-    <T extends Record<string, unknown>, K extends keyof T, E>(...keys: K[]) =>
-    (result: Result<T, E>) => {
-      return result.map((value) => {
-        const picked: Partial<T> = {}
-        for (const key of keys) {
-          if (key in value) {
-            picked[key] = value[key]
-          }
-        }
-        return picked as Pick<T, K>
-      })
+    <T extends Record<string, unknown>, K extends (keyof T)[]>(...keys: K) =>
+    (obj: T) => {
+      const picked: Partial<T> = {}
+      for (const key of keys) {
+        picked[key] = obj[key]
+      }
+
+      return picked as Pick<T, K[number]>
     },
 
-  extract:
-    <T extends Record<string, unknown>, K extends keyof T, E>(key: K) =>
-    (result: Result<T, E>): Result<T[K], E> => {
-      return result.map((value) => {
-        if (key in value) {
-          return value[key]
+  omit:
+    <T extends Record<string, unknown>, K extends (keyof T)[]>(...keys: K) =>
+    (obj: T): Omit<T, K[number]> => {
+      const picked: Partial<T> = {}
+      for (const key of Object.keys(obj) as K) {
+        if (keys.includes(key)) {
+          continue
         }
-        throw new Error(`Key ${String(key)} not found in result`)
-      })
+
+        picked[key] = obj[key]
+      }
+
+      return picked as Omit<T, K[number]>
     },
 
   collectSuccessful: <T, E>(results: Result<T, E>[]): Result<T[], E[]> => {
@@ -160,10 +169,14 @@ export const ResultUtils = {
   },
   mapParseErrors,
 
-  paginatedSerialize: <T>(r: Paginated<WithSerializeResult<T>>) => {
+  collectValidationErrors,
+  paginatedSerialize: <T>(
+    r: Paginated<WithSerialize<Result<T, ValidationError>>>,
+  ) => {
     const serializedItems = r.items.map((item) => item.serialize())
+    const rolledValidationErrors = collectValidationErrors(serializedItems)
 
-    return mapParseErrors(serializedItems).map(
+    return rolledValidationErrors.map(
       (items) =>
         ({
           ...r,

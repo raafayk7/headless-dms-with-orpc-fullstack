@@ -10,6 +10,6 @@
   },
   "devDependencies": {
     "@tsconfig/bun": "^1.0.8",
-    "@tsconfig/vite-react": "^6.3.6"
+    "@tsconfig/vite-react": "^7.0.0"
   }
 }

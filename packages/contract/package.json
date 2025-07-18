@@ -35,7 +35,7 @@
   "dependencies": {
     "@orpc/contract": "catalog:",
     "@orpc/zod": "catalog:",
-    "zod": "catalog:",
-    "effect": "catalog:"
+    "effect": "catalog:",
+    "zod": "catalog:"
   }
 }

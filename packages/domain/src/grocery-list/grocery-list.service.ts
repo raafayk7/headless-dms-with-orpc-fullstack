@@ -3,7 +3,10 @@ import { ItemEntity } from "@domain/grocery-list-item/item.entity"
 import { type UserEntity } from "@domain/user/user.entity"
 import type { ValidationError } from "@domain/utils"
 import { ResultUtils } from "@domain/utils/fp-utils"
-import { GroceryListEntity } from "./grocery-list.entity"
+import {
+  GroceryListEntity,
+  type GroceryListUpdateData,
+} from "./grocery-list.entity"
 import type { GroceryListOwnershipError } from "./grocery-list.errors"
 import type {
   GroceryListDetails,
@@ -36,11 +39,12 @@ export class GroceryListService {
   ): Result<GroceryListDetails, GroceryListOwnershipError | ValidationError> {
     const encoded = list
       .ensureIsOwner(owner)
-      .flatMap((_) => ResultUtils.encoded(list))
-      .flatZip((_) => ResultUtils.encoded(owner))
+      .flatMap((_) => ResultUtils.serialized(list))
+      .flatZip((_) => ResultUtils.serialized(owner))
       .flatMap(([listEncoded, ownerEncoded]) => {
         const itemsSerialized = items.map(ResultUtils.serialized)
-        const itemsEncoded = ResultUtils.mapParseErrors(itemsSerialized)
+        const itemsEncoded =
+          ResultUtils.collectValidationErrors(itemsSerialized)
 
         return itemsEncoded.map((it) => ({
           itemsEncoded: it,
@@ -97,39 +101,22 @@ export class GroceryListService {
     return { list, items }
   }
 
-  // static validateBulkItemOperation(
-  //   items: ItemEntity[],
-  //   operation: "mark-complete" | "mark-pending" | "delete",
-  //   userId: UserType["id"],
-  // ): { valid: boolean; errors: string[] } {
-  //   const errors: string[] = []
-  //
-  //   // Check if all items can be modified by the user
-  //   const unauthorizedItems = items.filter(
-  //     (item) => !item.canBeDeletedBy(userId),
-  //   )
-  //   if (unauthorizedItems.length > 0) {
-  //     errors.push(
-  //       `Cannot ${operation} ${unauthorizedItems.length} items: insufficient permissions`,
-  //     )
-  //   }
-  //
-  //   // Check operation-specific rules
-  //   if (operation === "mark-complete") {
-  //     const alreadyCompleted = items.filter((item) => item.isBought())
-  //     if (alreadyCompleted.length === items.length) {
-  //       errors.push("All items are already completed")
-  //     }
-  //   } else if (operation === "mark-pending") {
-  //     const alreadyPending = items.filter((item) => item.isPending())
-  //     if (alreadyPending.length === items.length) {
-  //       errors.push("All items are already pending")
-  //     }
-  //   }
-  //
-  //   return {
-  //     valid: errors.length === 0,
-  //     errors,
-  //   }
-  // }
+  static updateGroceryList(
+    list: GroceryListEntity,
+    updateData: GroceryListUpdateData,
+    user: UserEntity,
+  ): Result<GroceryListEntity, GroceryListOwnershipError | ValidationError> {
+    return list
+      .ensureIsOwner(user)
+      .flatMap(ResultUtils.serialized)
+      .flatMap((serializedList) => {
+        const updatedData = {
+          ...serializedList,
+          ...updateData,
+          updatedAt: new Date(),
+        }
+
+        return GroceryListEntity.fromEncoded(updatedData)
+      })
+  }
 }
