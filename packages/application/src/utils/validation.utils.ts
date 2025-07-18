@@ -24,7 +24,7 @@ type DtoSchemaInput<T, Out, In, Ctx> = {
   create: (data: unknown) => Result<T, ValidationError>
 }
 
-type DtoSchemaOutput<T> = StandardSchemaV1<unknown, T> & {
+type DtoSchemaOutput<T, In> = StandardSchemaV1<In, T> & {
   ast: AST
 }
 
@@ -70,7 +70,7 @@ export const simpleSchemaDto = <Name extends string, A, I>(
 
 export const dtoStandardSchema = <T, Out, In, Ctx>(
   dtoConst: DtoSchemaInput<T, Out, In, Ctx>,
-) => {
+): DtoSchemaOutput<T, In> => {
   return {
     ast: dtoConst.schema.ast,
     "~standard": {
@@ -95,6 +95,6 @@ export const dtoStandardSchema = <T, Out, In, Ctx>(
 
         return { issues } satisfies StandardSchemaV1.FailureResult
       },
-    },
-  } satisfies DtoSchemaOutput<T>
+    } satisfies StandardSchemaV1.Props<In, T>,
+  }
 }
