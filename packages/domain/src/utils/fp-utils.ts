@@ -5,8 +5,8 @@ import { ValidationError } from "./base.errors"
 import type { Paginated } from "./pagination.utils"
 import {
   parseErrorsToValidationError,
-  parseErrorToValidationError,
-} from "./valididation.utilssss"
+  validationErrorsToSingle,
+} from "./valididation.utils"
 
 export const eitherToResult = <R, L>(e: Either.Either<R, L>): Result<R, L> =>
   Either.match(e, {
@@ -92,14 +92,10 @@ function collectValidationErrors<T>(
   results: Result<T, ValidationError>[],
 ): Result<T[], ValidationError>
 function collectValidationErrors<T>(results: Result<T, ValidationError>[]) {
-  return Result.all(...results).mapErr((errors) => {
-    const allIssues = errors.flatMap((e) => e.issues)
-
-    return ValidationError.multiple(allIssues, { cause: errors })
-  })
+  return Result.all(...results).mapErr(validationErrorsToSingle)
 }
 
-export const ResultUtils = {
+export const FpUtils = {
   resultToEither,
   eitherToResult,
   resultToEffect,
@@ -121,6 +117,10 @@ export const ResultUtils = {
 
       return picked as Pick<T, K[number]>
     },
+  extract:
+    <T extends Record<string, unknown>, K extends keyof T>(key: K) =>
+    (obj: T): T[K] =>
+      obj[key],
 
   omit:
     <T extends Record<string, unknown>, K extends (keyof T)[]>(...keys: K) =>

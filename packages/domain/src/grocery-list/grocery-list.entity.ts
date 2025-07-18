@@ -2,7 +2,7 @@ import type { Result } from "@carbonteq/fp"
 import { Result as R } from "@carbonteq/fp"
 import { UserEntity, UserSchema, type UserType } from "@domain/user/user.entity"
 import { BaseEntity, defineEntityStruct } from "@domain/utils/base.entity"
-import { ResultUtils } from "@domain/utils/fp-utils"
+import { FpUtils } from "@domain/utils/fp-utils"
 import { createEncoderDecoderBridge } from "@domain/utils/schema-utils"
 import { Schema as S } from "effect"
 import { GroceryListOwnershipError } from "./grocery-list.errors"
@@ -25,7 +25,6 @@ export const GroceryListUpdateSchema = S.partialWith(
 )
 
 export type GroceryListType = S.Schema.Type<typeof GroceryListSchema>
-export type GroceryListEncoded = S.Schema.Encoded<typeof GroceryListSchema>
 export type GroceryListUpdateData = S.Schema.Type<
   typeof GroceryListUpdateSchema
 >
@@ -90,6 +89,6 @@ export class GroceryListEntity extends BaseEntity implements GroceryListType {
   }
 
   updateData() {
-    return this.serialize().map(ResultUtils.omit("id", "createdAt", "ownerId"))
+    return this.serialize().map(FpUtils.omit("id", "createdAt", "ownerId"))
   }
 }

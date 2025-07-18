@@ -96,7 +96,7 @@ describe("ParseError to ValidationError Conversion", () => {
       // Check that each issue has a path
       validationError.issues.forEach((issue) => {
         expect(issue.path).toBeDefined()
-        expect(issue.path!.length).toBeGreaterThan(0)
+        expect(issue.path?.length).toBeGreaterThan(0)
       })
     }
   })
@@ -271,8 +271,11 @@ describe("ParseError to ValidationError Conversion", () => {
         const validationError = parseErrorToValidationError(result.left)
 
         expect(validationError.issues.length).toBeGreaterThan(0)
-        expect(validationError.issues[0].message).toBeDefined()
-        expect(validationError.issues[0].message.length).toBeGreaterThan(0)
+        const issue = validationError.issues[0]
+        expect(issue?.message).toBeDefined()
+        expect(issue?.message).toBe(
+          "Expected a string at least 5 character(s) long, got 'hi'",
+        )
       }
     })
 
@@ -329,8 +332,8 @@ describe("ParseError to ValidationError Conversion", () => {
         const validationError = parseErrorToValidationError(result.left)
 
         expect(validationError.issues.length).toBeGreaterThan(0)
-        expect(validationError.issues[0].message).toBeDefined()
-        expect(validationError.issues[0].message.length).toBeGreaterThan(0)
+        expect(validationError.issues[0]?.message).toBeDefined()
+        expect(validationError.issues[0]?.message.length).toBeGreaterThan(0)
       }
     })
 
@@ -348,8 +351,8 @@ describe("ParseError to ValidationError Conversion", () => {
         const validationError = parseErrorToValidationError(result.left)
 
         expect(validationError.issues.length).toBeGreaterThan(0)
-        expect(validationError.issues[0].message).toBeDefined()
-        expect(validationError.issues[0].message.length).toBeGreaterThan(0)
+        expect(validationError.issues[0]?.message).toBeDefined()
+        expect(validationError.issues[0]?.message.length).toBeGreaterThan(0)
       }
     })
   })

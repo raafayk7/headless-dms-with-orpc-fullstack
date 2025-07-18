@@ -2,7 +2,7 @@ import { Result } from "@carbonteq/fp"
 import { ItemEntity } from "@domain/grocery-list-item/item.entity"
 import { type UserEntity } from "@domain/user/user.entity"
 import type { ValidationError } from "@domain/utils"
-import { ResultUtils } from "@domain/utils/fp-utils"
+import { FpUtils } from "@domain/utils/fp-utils"
 import {
   GroceryListEntity,
   type GroceryListUpdateData,
@@ -39,12 +39,11 @@ export class GroceryListService {
   ): Result<GroceryListDetails, GroceryListOwnershipError | ValidationError> {
     const encoded = list
       .ensureIsOwner(owner)
-      .flatMap((_) => ResultUtils.serialized(list))
-      .flatZip((_) => ResultUtils.serialized(owner))
+      .flatMap((_) => FpUtils.serialized(list))
+      .flatZip((_) => FpUtils.serialized(owner))
       .flatMap(([listEncoded, ownerEncoded]) => {
-        const itemsSerialized = items.map(ResultUtils.serialized)
-        const itemsEncoded =
-          ResultUtils.collectValidationErrors(itemsSerialized)
+        const itemsSerialized = items.map(FpUtils.serialized)
+        const itemsEncoded = FpUtils.collectValidationErrors(itemsSerialized)
 
         return itemsEncoded.map((it) => ({
           itemsEncoded: it,
@@ -108,7 +107,7 @@ export class GroceryListService {
   ): Result<GroceryListEntity, GroceryListOwnershipError | ValidationError> {
     return list
       .ensureIsOwner(user)
-      .flatMap(ResultUtils.serialized)
+      .flatMap(FpUtils.serialized)
       .flatMap((serializedList) => {
         const updatedData = {
           ...serializedList,
