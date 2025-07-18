@@ -1,7 +1,6 @@
 import { useAppForm } from "@app/shared/hooks/app-form"
 import { useRegisterMutation } from "@app/shared/hooks/auth-hooks"
 import { registerFormSchema } from "@app/shared/schemas/auth"
-import { toast } from "@app/shared/toast"
 import { Card, Divider, Stack, Text, Title } from "@mantine/core"
 import AnchorLink from "../layout/AnchorLink"
 
@@ -18,10 +17,6 @@ const RegisterForm = ({ onRegisterSuccess }: RegisterFormProps) => {
 
     onSubmit: async ({ value }) => {
       await registerMut.mutateAsync(value, {
-        onError: (err) => {
-          console.error(err)
-          toast.error({ message: err.message, title: err.name })
-        },
         onSuccess: async (data) => {
           if (data.data) {
             await onRegisterSuccess()

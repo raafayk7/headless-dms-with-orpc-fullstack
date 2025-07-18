@@ -1,5 +1,4 @@
 import { parseErrorToValidationError } from "@domain/utils/valididation.utils"
-import { ValidationError } from "@domain/utils/base.errors"
 import { Schema as S } from "effect"
 
 // Test schema with various validation scenarios

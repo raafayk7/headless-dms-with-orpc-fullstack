@@ -9,8 +9,7 @@ import {
   Text,
   Title,
 } from "@mantine/core"
-import { useQueryClient } from "@tanstack/react-query"
-import { Link, useNavigate } from "@tanstack/react-router"
+import { Link } from "@tanstack/react-router"
 import { ArrowLeft, Edit, Eye, Trash2 } from "lucide-react"
 
 type ListDetailsPageProps = {
@@ -18,8 +17,8 @@ type ListDetailsPageProps = {
 }
 
 export const ListDetailsPage = ({ id }: ListDetailsPageProps) => {
-  const navigate = useNavigate()
-  const queryClient = useQueryClient()
+  // const _navigate = useNavigate()
+  // const _queryClient = useQueryClient()
 
   const { data: list } = useList(id)
 

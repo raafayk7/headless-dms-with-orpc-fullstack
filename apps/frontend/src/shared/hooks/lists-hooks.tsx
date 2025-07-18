@@ -1,14 +1,13 @@
 import { orpc } from "@app/shared/orpc"
-import type { NewGroceryListFormData } from "@app/shared/schemas/list"
+import { isDefinedError } from "@orpc/client"
 import {
   type QueryClient,
   useMutation,
   useQueryClient,
   useSuspenseQuery,
 } from "@tanstack/react-query"
+import { useNavigate } from "@tanstack/react-router"
 import { toast } from "../toast"
-import { useNavigate, type UseNavigateResult } from "@tanstack/react-router"
-import { isDefinedError } from "@orpc/client"
 
 type Params = {
   limit?: number

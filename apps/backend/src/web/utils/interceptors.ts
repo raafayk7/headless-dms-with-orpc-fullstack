@@ -22,7 +22,6 @@ export const validationErrMap = (err: unknown) => {
   // https://orpc.unnoq.com/docs/advanced/validation-errors#customizing-with-middleware
   // https://orpc.unnoq.com/docs/advanced/validation-errors#type%E2%80%90safe-validation-errors
   if (err.code === "BAD_REQUEST") {
-    console.debug("bad request", err.data.issues)
     const zodErr = new ZodError(err.cause.issues as $ZodIssue[])
 
     throw new ORPCError("INPUT_VALIDATION_FAILED", {

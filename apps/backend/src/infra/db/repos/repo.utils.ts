@@ -3,7 +3,7 @@ import { FpUtils, ValidationError } from "@domain/utils"
 
 type EntityMapper<T, U> = (data: T) => Result<U, ValidationError>
 
-export const enhanceEntityMapper = <T, U, E>(fn: EntityMapper<T, U>) => {
+export const enhanceEntityMapper = <T, U>(fn: EntityMapper<T, U>) => {
   const mapOne = (data: T): Result<U, ValidationError> => fn(data)
 
   const mapMany = (data: T[]): Result<U[], ValidationError> => {

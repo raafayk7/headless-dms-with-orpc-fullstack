@@ -16,12 +16,7 @@ export const validateWithEffect = <In, Out>(
       onExcessProperty: "ignore",
       exact: true,
     }),
-  ).mapErr((parseError) => {
-    console.debug("parse errors", parseError)
-    console.debug(parseError.issue)
-
-    return parseErrorToValidationError(parseError)
-  })
+  ).mapErr(parseErrorToValidationError)
 }
 
 type DtoSchemaInput<T, Out, In, Ctx> = {
@@ -90,8 +85,6 @@ export const dtoStandardSchema = <T, Out, In, Ctx>(
           } satisfies StandardSchemaV1.SuccessResult<T>
 
         const err = result.unwrapErr()
-        console.debug("unwraooed err", err)
-        console.debug("err issues", err.issues)
         const issues = err.issues.map(
           (issue) =>
             ({

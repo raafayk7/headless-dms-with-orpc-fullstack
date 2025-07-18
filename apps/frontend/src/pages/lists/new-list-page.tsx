@@ -1,9 +1,7 @@
 import { setOnSubmitErrorMap } from "@app/shared/form"
 import { useAppForm } from "@app/shared/hooks/app-form"
 import { useNewListMutation } from "@app/shared/hooks/lists-hooks"
-import { orpc } from "@app/shared/orpc"
 import { newGroceryListFormSchema } from "@app/shared/schemas/list"
-import { toast } from "@app/shared/toast"
 import {
   Button,
   Card,
@@ -27,7 +25,6 @@ export const NewListPage = () => {
     onSubmit: async ({ value, formApi }) => {
       await newListMut.mutateAsync(value, {
         onError: (err) => {
-          console.error("Error creating new list:")
           setOnSubmitErrorMap(err, formApi)
         },
       })

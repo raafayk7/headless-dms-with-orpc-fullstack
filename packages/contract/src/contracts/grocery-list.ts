@@ -5,10 +5,7 @@ import {
 import { DashboardStatsSchema } from "@application/schemas/dashboard"
 import { dtoStandardSchema } from "@application/utils/validation.utils"
 import { appAuthenticatedBase } from "@contract/utils/oc.base"
-import {
-  GroceryListCreateSchema,
-  GroceryListId,
-} from "@domain/grocery-list/grocery-list.entity"
+import { GroceryListId } from "@domain/grocery-list/grocery-list.entity"
 import {
   GetListsParamsSchema,
   GetListsResultSchema,

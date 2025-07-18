@@ -59,7 +59,6 @@ export const useLoginMutation = () => {
       })
 
       if (res.error) {
-        console.error(res.error)
         toast.error({
           message: res.error.message,
           title: res.error.statusText || "Login failed",
@@ -70,6 +69,9 @@ export const useLoginMutation = () => {
       }
 
       return res
+    },
+    onError: (err) => {
+      toast.error({ message: err.message, title: err.name })
     },
   })
 }
@@ -86,7 +88,6 @@ export const useRegisterMutation = () => {
       })
 
       if (res.error) {
-        console.error(res.error)
         toast.error({
           message: res.error.message,
           title: res.error.code || "Registration failed",
@@ -97,6 +98,9 @@ export const useRegisterMutation = () => {
       }
 
       return res
+    },
+    onError: (err) => {
+      toast.error({ message: err.message, title: err.name })
     },
   })
 }
