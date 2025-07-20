@@ -19,7 +19,7 @@ const listsQueryOptions = (params: Params = {}) => {
   return orpc.authenticated.groceryList.getLists.queryOptions({
     input: {
       pagination: {
-        limit: params.limit ?? 50,
+        limit: params.limit ?? 10,
         page: params.page ?? 1,
       },
       filters: {
@@ -39,10 +39,8 @@ export const prefetchList = (queryClient: QueryClient, id: string) =>
   queryClient.ensureQueryData(listQueryOptions(id))
 export const useList = (id: string) => useSuspenseQuery(listQueryOptions(id))
 
-export const prefetchLists = (queryClient: QueryClient) =>
-  queryClient.ensureQueryData(
-    listsQueryOptions({ limit: 5, page: 1, search: "" }),
-  )
+export const prefetchLists = (queryClient: QueryClient, params: Params = {}) =>
+  queryClient.ensureQueryData(listsQueryOptions({ ...params }))
 
 export const useLists = (params: Params = {}) =>
   useSuspenseQuery(listsQueryOptions(params))

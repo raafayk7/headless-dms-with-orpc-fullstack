@@ -12,21 +12,50 @@ import {
   Title,
 } from "@mantine/core"
 import { useDebouncedValue } from "@mantine/hooks"
-import { Link } from "@tanstack/react-router"
-import { Plus, Search } from "lucide-react"
-import { useState } from "react"
+import { Link, useNavigate, useSearch } from "@tanstack/react-router"
+import { Plus, Search, X } from "lucide-react"
+import { useCallback, useEffect, useState } from "react"
 
 export const GroceryListsListPage = () => {
-  const [search, setSearch] = useState("")
-  const [status, setStatus] = useState<"active" | "inactive" | "">("")
+  const navigate = useNavigate({ from: "/lists" })
+  const searchParams = useSearch({ from: "/_private/lists/" })
+
+  const [search, setSearch] = useState(searchParams.search)
   const [debouncedSearch] = useDebouncedValue(search, 300)
 
-  const { data } = useLists({
-    limit: 50,
-    page: 1,
-    search: debouncedSearch || undefined,
-    status: status || undefined,
+  // syncing debounced search value with searchParams
+  // searchParams -> local search
+  useEffect(() => {
+    setSearch(searchParams.search)
+  }, [searchParams.search])
+
+  // local search -> searchParams
+  useEffect(() => {
+    if (debouncedSearch !== searchParams.search) {
+      navigate({
+        search: (prev) => ({ ...prev, page: 1, search: debouncedSearch }),
+        replace: true, // avoid cluttering browser history
+      })
+    }
+  }, [debouncedSearch, searchParams.search, navigate])
+
+  const { data, isLoading } = useLists({
+    ...searchParams,
+    status: searchParams.status || undefined,
   })
+
+  const handleStatusChange = useCallback(
+    (value: string | null) => {
+      const status = (value || "") as "active" | "inactive" | ""
+      navigate({
+        search: (prev) => ({
+          ...prev,
+          status,
+        }),
+      })
+    },
+    [navigate],
+  )
 
   const lists = data.items
 
@@ -46,6 +75,9 @@ export const GroceryListsListPage = () => {
 
         <Group gap="md">
           <TextInput
+            disabled={isLoading}
+            enterKeyHint="search"
+            inputMode="search"
             leftSection={<Search size={16} />}
             onChange={(e) => setSearch(e.currentTarget.value)}
             placeholder="Search lists..."
@@ -59,26 +91,27 @@ export const GroceryListsListPage = () => {
               { value: "active", label: "Active" },
               { value: "inactive", label: "Inactive" },
             ]}
-            onChange={(value) => setStatus(value as "active" | "inactive" | "")}
+            disabled={isLoading}
+            onChange={handleStatusChange}
             placeholder="Filter by status"
             style={{ minWidth: 150 }}
-            value={status}
+            value={searchParams.status}
           />
         </Group>
 
         {lists.length === 0 ? (
           <Stack align="center" gap="md" p="xl">
             <Text c="dimmed" size="lg" ta="center">
-              {search || status
+              {searchParams.search || searchParams.status
                 ? "No lists match your filters"
                 : "No grocery lists found"}
             </Text>
             <Text c="dimmed" ta="center">
-              {search || status
+              {searchParams.search || searchParams.status
                 ? "Try adjusting your search or filters"
                 : "Create your first grocery list to get started"}
             </Text>
-            {!search && !status && (
+            {!searchParams.search && !searchParams.status && (
               <Button
                 component={Link}
                 leftSection={<Plus size={16} />}
