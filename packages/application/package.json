@@ -2,11 +2,13 @@
   "name": "@repo/application",
   "version": "1.0.0",
   "description": "Application layer with use cases and services for the project",
-  "packageManager": "bun@1.2.18",
+  "packageManager": "bun@1.2.19",
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "files": ["src"],
+  "files": [
+    "src"
+  ],
   "exports": {
     ".": {
       "import": "./src/index.ts",
