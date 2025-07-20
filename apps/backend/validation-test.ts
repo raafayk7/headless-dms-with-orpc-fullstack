@@ -203,7 +203,7 @@ for (const testCase of testCases) {
   console.log(`✅ Verification:`)
   const actualFields = validationError.issues
     .map((issue) => issue.field)
-    .filter(Boolean)
+    .filter((field) => field !== undefined)
   const missingFields = testCase.expected.shouldHaveFields.filter(
     (field) => !actualFields.includes(field),
   )

@@ -3,20 +3,14 @@ import type { GroceryListType } from "@domain/grocery-list/grocery-list.entity"
 import type {
   ItemEntity,
   ItemType,
-  ItemUpdateDataEncoded,
 } from "@domain/grocery-list-item/item.entity"
 import { ItemEntity as Item } from "@domain/grocery-list-item/item.entity"
-import {
-  ItemNotFoundError,
-  ItemValidationError,
-} from "@domain/grocery-list-item/item.errors"
+import { ItemNotFoundError } from "@domain/grocery-list-item/item.errors"
 import {
   type GroceryItemFilters,
   ItemRepository,
 } from "@domain/grocery-list-item/item.repository"
-import type { RepoResult, RepoUnitResult } from "@domain/utils"
-import { DateTime } from "@domain/utils/refined-types"
-import { parseErrorToValidationError } from "@domain/utils/valididation.utils"
+import { FpUtils, type RepoResult, ValidationError } from "@domain/utils"
 import { and, eq, gte } from "drizzle-orm"
 import { injectable } from "tsyringe"
 import type { AppDatabase } from "../conn"
@@ -46,32 +40,28 @@ export class DrizzleItemRepository extends ItemRepository {
   }
 
   async create(item: ItemEntity): Promise<RepoResult<ItemEntity>> {
-    const encoded = item.serialize()
+    const encoded = FpUtils.serializedPreserveId(item)
 
-    if (encoded.isErr()) {
-      return encoded.mapErr(parseErrorToValidationError)
-    }
-    const data = encoded.unwrap()
+    const res = await encoded
+      .flatMap(async (itemData) => {
+        const [inserted] = await this.db
+          .insert(groceryListItems)
+          .values({
+            ...itemData,
+            listId: item.listId,
+            createdBy: item.createdBy,
+          })
+          .returning()
 
-    const values = {
-      id: item.id,
-      listId: item.listId,
-      status: data.status,
-      name: data.name,
-      quantity: data.quantity,
-      createdBy: item.createdBy,
-    } satisfies typeof groceryListItems.$inferInsert
+        if (!inserted) {
+          return R.Err(new ValidationError("Failed to create item"))
+        }
 
-    const [inserted] = await this.db
-      .insert(groceryListItems)
-      .values(values)
-      .returning()
+        return mapper.mapOne(inserted)
+      })
+      .toPromise()
 
-    if (!inserted) {
-      return R.Err(new ItemValidationError("Failed to create item"))
-    }
-
-    return mapper.mapOne(inserted)
+    return res
   }
 
   async findById(
@@ -100,55 +90,52 @@ export class DrizzleItemRepository extends ItemRepository {
   }
 
   async update(
-    id: ItemType["id"],
-    updates: ItemUpdateDataEncoded,
+    item: ItemEntity,
   ): Promise<RepoResult<ItemEntity, ItemNotFoundError>> {
-    const updateData: Partial<typeof groceryListItems.$inferInsert> = {
-      updatedAt: DateTime.now(),
-    }
+    const res = await item
+      .updateData()
+      .flatMap(async (updateData) => {
+        const [updated] = await this.db
+          .update(groceryListItems)
+          .set(updateData)
+          .where(eq(groceryListItems.id, item.id))
+          .returning()
 
-    if (updates.name !== undefined) {
-      updateData.name = updates.name
-    }
-    if (updates.quantity !== undefined) {
-      updateData.quantity = updates.quantity
-    }
-    if (updates.status !== undefined) {
-      updateData.status = updates.status
-    }
+        if (!updated) {
+          return R.Err(new ItemNotFoundError(item.id))
+        }
 
-    const [updated] = await this.db
-      .update(groceryListItems)
-      .set(updateData)
+        return mapper.mapOne(updated)
+      })
+      .toPromise()
+
+    return res
+  }
+
+  async delete(
+    id: ItemType["id"],
+  ): Promise<RepoResult<ItemEntity, ItemNotFoundError>> {
+    const [result] = await this.db
+      .delete(groceryListItems)
       .where(eq(groceryListItems.id, id))
       .returning()
 
-    if (!updated) {
+    if (!result) {
       return R.Err(new ItemNotFoundError(id))
     }
 
-    return mapper.mapOne(updated)
+    return mapper.mapOne(result)
   }
 
-  async delete(id: ItemType["id"]): Promise<RepoUnitResult<ItemNotFoundError>> {
-    const result = await this.db
-      .delete(groceryListItems)
-      .where(eq(groceryListItems.id, id))
-      .returning({ id: groceryListItems.id })
-
-    if (result.length === 0) {
-      return R.Err(new ItemNotFoundError(id))
-    }
-
-    return R.UNIT_RESULT
-  }
-
-  async deleteByList(list: GroceryListType): Promise<RepoUnitResult> {
-    await this.db
+  async deleteByList(
+    list: GroceryListType,
+  ): Promise<RepoResult<ItemEntity["id"][]>> {
+    const results = await this.db
       .delete(groceryListItems)
       .where(eq(groceryListItems.listId, list.id))
+      .returning({ id: groceryListItems.id })
 
-    return R.UNIT_RESULT
+    return R.Ok(results.map((r) => r.id))
   }
 
   async count(filters: GroceryItemFilters): Promise<number> {

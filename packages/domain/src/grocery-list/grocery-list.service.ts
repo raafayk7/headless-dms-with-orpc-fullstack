@@ -2,6 +2,7 @@ import { Result } from "@carbonteq/fp"
 import { ItemEntity } from "@domain/grocery-list-item/item.entity"
 import { type UserEntity } from "@domain/user/user.entity"
 import type { ValidationError } from "@domain/utils"
+import { ComposeUtils } from "@domain/utils/compose.utils"
 import { FpUtils } from "@domain/utils/fp-utils"
 import {
   GroceryListEntity,
@@ -105,17 +106,17 @@ export class GroceryListService {
     updateData: GroceryListUpdateData,
     user: UserEntity,
   ): Result<GroceryListEntity, GroceryListOwnershipError | ValidationError> {
-    return list
-      .ensureIsOwner(user)
-      .flatMap(FpUtils.serialized)
-      .flatMap((serializedList) => {
-        const updatedData = {
-          ...serializedList,
-          ...updateData,
-          updatedAt: new Date(),
-        }
-
-        return GroceryListEntity.fromEncoded(updatedData)
-      })
+    return (
+      list
+        .ensureIsOwner(user)
+        .flatMap(FpUtils.serialized)
+        // .map((serializedList) => ({
+        //   ...serializedList,
+        //   ...updateData,
+        //   updatedAt: new Date(),
+        // }))
+        .map(ComposeUtils.merge({ ...updateData, updatedAt: new Date() }))
+        .flatMap(GroceryListEntity.fromEncoded)
+    )
   }
 }

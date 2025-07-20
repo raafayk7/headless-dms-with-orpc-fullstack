@@ -1,3 +1,4 @@
+import type { DashboardStats as TDashboardStats } from "@application/schemas/dashboard"
 import {
   ActionIcon,
   Box,
@@ -8,11 +9,10 @@ import {
   Text,
   Title,
 } from "@mantine/core"
-import type { groceryList } from "@repo/contract/schemas"
 import { Check, Clock, List, Plus } from "lucide-react"
 
 type DashboardStatsProps = {
-  stats: groceryList.DashboardStats
+  stats: TDashboardStats
 }
 
 const StatCard = ({

@@ -1,24 +1,18 @@
 import type { ItemEntity } from "@domain/grocery-list-item"
 import type { UserType } from "@domain/user/user.entity"
 import type { RepoResult, RepoUnitResult } from "@domain/utils"
-import type { Paginated } from "@domain/utils/pagination.utils"
+import type {
+  Paginated,
+  PaginationParams,
+} from "@domain/utils/pagination.utils"
 import type { GroceryListEntity, GroceryListType } from "./grocery-list.entity"
 import type { GroceryListNotFoundError } from "./grocery-list.errors"
 
-export type GroceryListCountFilters = {
-  userId?: UserType["id"]
-  since?: Date
-}
-
 export type GroceryListFindFilters = {
-  userId: UserType["id"]
+  userId?: UserType["id"]
   search?: string
   status?: "active" | "inactive"
   since?: Date
-  page?: number
-  limit?: number
-  sortBy?: string
-  sortOrder?: "asc" | "desc"
 }
 
 export abstract class GroceryListRepository {
@@ -40,6 +34,7 @@ export abstract class GroceryListRepository {
   ): Promise<RepoResult<GroceryListEntity[]>>
   abstract findWithFilters(
     filters: GroceryListFindFilters,
+    pagination: PaginationParams,
   ): Promise<RepoResult<Paginated<GroceryListEntity>>>
-  abstract count(filters: GroceryListCountFilters): Promise<number>
+  abstract count(filters: GroceryListFindFilters): Promise<number>
 }

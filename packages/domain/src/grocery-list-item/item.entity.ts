@@ -1,10 +1,16 @@
-import type { UnitResult } from "@carbonteq/fp"
+import type { Result } from "@carbonteq/fp"
 import { Result as R } from "@carbonteq/fp"
 import {
+  GroceryListEntity,
   GroceryListId,
   type GroceryListType,
 } from "@domain/grocery-list/grocery-list.entity"
-import { UserIdSchema, type UserType } from "@domain/user/user.entity"
+import {
+  UserEntity,
+  UserIdSchema,
+  type UserType,
+} from "@domain/user/user.entity"
+import { FpUtils } from "@domain/utils"
 import { BaseEntity, defineEntityStruct } from "@domain/utils/base.entity"
 import { Opt } from "@domain/utils/refined-types"
 import { createEncoderDecoderBridge } from "@domain/utils/schema-utils"
@@ -96,26 +102,34 @@ export class ItemEntity extends BaseEntity implements ItemType {
   }
 
   ensureCanBeModifiedBy(
-    userId: UserType["id"],
-  ): UnitResult<ItemOwnershipError> {
-    if (!this.isCreatedBy(userId)) {
+    list: GroceryListEntity,
+    user: UserEntity,
+  ): Result<this, ItemOwnershipError> {
+    if (!this.isCreatedBy(user.id) && !list.isOwner(user.id)) {
       return R.Err(new ItemOwnershipError(this.id))
     }
 
-    return R.UNIT_RESULT
+    return R.Ok(this)
   }
 
   ensureBelongsToList(
-    listId: GroceryListType["id"],
-  ): UnitResult<ItemListMismatchError> {
-    if (!this.belongsToList(listId)) {
-      return R.Err(new ItemListMismatchError(this.id, listId))
+    list: GroceryListEntity,
+  ): Result<this, ItemListMismatchError> {
+    if (!this.belongsToList(list.id)) {
+      return R.Err(new ItemListMismatchError(this.id, list.id))
     }
 
-    return R.UNIT_RESULT
+    return R.Ok(this)
   }
 
   serialize() {
     return bridge.serialize(this)
+  }
+
+  updateData() {
+    return this.serialize().map(
+      // FpUtils.pick("name", "quantity", "notes", "status", "updatedAt"),
+      FpUtils.omit("id", "createdAt", "createdBy", "listId"),
+    )
   }
 }

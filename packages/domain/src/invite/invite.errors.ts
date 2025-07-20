@@ -1,9 +1,10 @@
-import { NotFoundError, ValidationError } from "../utils/base.errors"
+import { NotFoundError, ValidationError } from "@domain/utils/base.errors"
+import type { InviteType } from "./invite.entity"
 
 export class InviteNotFoundError extends NotFoundError {
   override readonly code = "INVITE_NOT_FOUND" as const
 
-  constructor(inviteId: string, context?: Record<string, unknown>) {
+  constructor(inviteId: InviteType["id"], context?: Record<string, unknown>) {
     super("Invite", inviteId, context)
   }
 }

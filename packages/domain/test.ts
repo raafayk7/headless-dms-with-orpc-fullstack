@@ -1,4 +1,6 @@
+import { Result } from "@carbonteq/fp"
 import { GroceryListCreateSchema } from "@domain/grocery-list/grocery-list.entity"
+import { ComposeUtils } from "@domain/utils/compose.utils"
 import { parseErrorToValidationError } from "@domain/utils/valididation.utils"
 import { Either, Schema as S } from "effect"
 
@@ -23,3 +25,9 @@ Either.match(res, {
     console.debug("Parsed issues", parsed.issues)
   },
 })
+
+const r = Result.Ok({ a: 1, b: 2, foo: "a" }).map(
+  ComposeUtils.mergeMul({ a: 3 }, { b: 4 }, { c: 2 }),
+)
+
+console.debug(r)

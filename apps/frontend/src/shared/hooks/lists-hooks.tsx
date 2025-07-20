@@ -1,5 +1,4 @@
 import { orpc } from "@app/shared/orpc"
-import { isDefinedError } from "@orpc/client"
 import {
   type QueryClient,
   useMutation,
@@ -19,11 +18,14 @@ type Params = {
 const listsQueryOptions = (params: Params = {}) => {
   return orpc.authenticated.groceryList.getLists.queryOptions({
     input: {
-      limit: 50,
-      page: 1,
-      search: undefined,
-      status: undefined,
-      ...params,
+      pagination: {
+        limit: params.limit ?? 50,
+        page: params.page ?? 1,
+      },
+      filters: {
+        search: params.search,
+        status: params.status,
+      },
     },
   })
 }
@@ -55,11 +57,6 @@ export const useNewListMutation = () => {
     orpc.authenticated.groceryList.createGroceryList.mutationOptions({
       throwOnError: false,
       onError: (err) => {
-        if (isDefinedError(err)) {
-          console.debug("defined error")
-        } else {
-          console.debug("undefined error")
-        }
         toast.error({
           title: "Failed to create grocery list",
           message: err.message,

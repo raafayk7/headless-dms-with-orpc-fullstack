@@ -1,13 +1,20 @@
+import type { GroceryListType } from "@domain/grocery-list/grocery-list.entity"
 import {
   ForbiddenError,
   NotFoundError,
   ValidationError,
 } from "@domain/utils/base.errors"
+import type { ItemType } from "./item.entity"
+
+type ItemId = ItemType["id"]
 
 export class ItemNotFoundError extends NotFoundError {
   override readonly code = "ITEM_NOT_FOUND" as const
 
-  constructor(itemId: string, context?: Record<string, unknown>) {
+  constructor(
+    readonly itemId: ItemId,
+    context?: Record<string, unknown>,
+  ) {
     super("Item", itemId, context)
   }
 }
@@ -18,22 +25,21 @@ export class ItemValidationError extends ValidationError {
 
 export class ItemOwnershipError extends ForbiddenError {
   override readonly code = "ITEM_OWNERSHIP_ERROR" as const
-  readonly itemId: string
 
-  constructor(itemId: string, context?: Record<string, unknown>) {
+  constructor(
+    readonly itemId: ItemId,
+    context?: Record<string, unknown>,
+  ) {
     super("You are not authorized to modify this item", "item:access", context)
-    this.itemId = itemId
   }
 }
 
 export class ItemListMismatchError extends ValidationError {
   override readonly code = "ITEM_LIST_MISMATCH_ERROR" as const
-  readonly itemId: string
-  readonly listId: string
 
   constructor(
-    itemId: string,
-    listId: string,
+    readonly itemId: ItemId,
+    readonly listId: GroceryListType["id"],
     context?: Record<string, unknown>,
   ) {
     super(
@@ -47,7 +53,5 @@ export class ItemListMismatchError extends ValidationError {
       ],
       context,
     )
-    this.itemId = itemId
-    this.listId = listId
   }
 }

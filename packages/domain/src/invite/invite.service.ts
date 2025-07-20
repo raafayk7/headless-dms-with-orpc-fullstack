@@ -1,7 +1,7 @@
 import { Result as R, type UnitResult } from "@carbonteq/fp"
-import type { GroceryListEntity } from "../entities/grocery-list.entity"
-import type { InviteEntity } from "../entities/invite.entity"
-import type { UserEntity } from "../entities/user.entity"
+import type { GroceryListEntity } from "@domain/grocery-list/grocery-list.entity"
+import type { UserEntity } from "@domain/user/user.entity"
+import type { InviteEntity } from "./invite.entity"
 
 export interface InviteUsageAttempt {
   invite: InviteEntity
@@ -9,8 +9,10 @@ export interface InviteUsageAttempt {
   user: UserEntity
 }
 
-export const InviteDomainService = {
-  validateInviteUsage: (attempt: InviteUsageAttempt): UnitResult<string[]> => {
+export class InviteDomainService {
+  static validateInviteUsage(
+    attempt: InviteUsageAttempt,
+  ): UnitResult<string[]> {
     const errors: string[] = []
     const { invite, list, user } = attempt
 
@@ -29,5 +31,5 @@ export const InviteDomainService = {
     if (errors.length === 0) return R.UNIT_RESULT
 
     return R.Err(errors)
-  },
-} as const
+  }
+}

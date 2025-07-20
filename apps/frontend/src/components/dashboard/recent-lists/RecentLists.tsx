@@ -1,10 +1,10 @@
 import { ListCard } from "@app/components/shared/ListCard"
-import type { GroceryListEncoded } from "@domain/grocery-list/grocery-list.entity"
+import type { GroceryListEncoded } from "@domain/grocery-list/grocery-list.schemas"
 import { Button, Group, SimpleGrid, Stack, Title } from "@mantine/core"
 import { Link } from "@tanstack/react-router"
 
 type RecentListsProps = {
-  lists: GroceryListEncoded[]
+  lists: readonly GroceryListEncoded[]
 }
 
 export const RecentLists = ({ lists }: RecentListsProps) => {

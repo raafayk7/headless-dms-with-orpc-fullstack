@@ -14,13 +14,8 @@ import {
 import { Schema as S } from "effect"
 
 const list = GroceryListSchema.pipe(S.omit("ownerId"))
-export type GroceryListEncoded = Omit<
-  S.Schema.Encoded<typeof list>,
-  "createdAt" | "updatedAt"
-> & {
-  createdAt: number | string
-  updatedAt: number | string
-}
+
+export type GroceryListEncoded = S.Schema.Encoded<typeof list>
 
 export const NewGroceryListSchema = GroceryListCreateSchema.pipe(
   S.extend(
@@ -34,17 +29,18 @@ export type NewGroceryListEncoded = S.Schema.Encoded<
   typeof NewGroceryListSchema
 >
 
-export const GetListsParamsSchema = PaginationParamsSchema.pipe(
-  S.extend(
-    S.Struct({
-      search: S.optional(S.String),
-      status: S.optional(S.Literal("active", "inactive")),
-      sinceMs: S.optional(S.Number.pipe(S.int(), S.positive())),
-    }),
-  ),
-)
+export const GroceryListFiltersSchema = S.Struct({
+  search: S.optional(S.String),
+  status: S.optional(S.Literal("active", "inactive")),
+  sinceMs: S.optional(S.Number.pipe(S.int(), S.positive())),
+})
 
-export const GetListsResultSchema = PaginatedResultSchema(list)
+export const GetListsParamsSchema = S.Struct({
+  filters: GroceryListFiltersSchema,
+  pagination: PaginationParamsSchema,
+})
+
+export const GetListsResultSchema = PaginatedResultSchema(S.encodedSchema(list))
 
 export const GroceryListDetailsSchema = S.asSchema(
   GroceryListSchema.pipe(

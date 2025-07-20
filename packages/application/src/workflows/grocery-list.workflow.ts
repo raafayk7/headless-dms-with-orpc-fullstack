@@ -17,6 +17,7 @@ import type {
 import { GroceryListService } from "@domain/grocery-list/grocery-list.service"
 import { ItemRepository } from "@domain/grocery-list-item/item.repository"
 import type { UserEntity } from "@domain/user/user.entity"
+import type { PaginationParams } from "@domain/utils"
 import { FpUtils } from "@domain/utils/fp-utils"
 import { DateTime as DT } from "effect"
 import { autoInjectable } from "tsyringe"
@@ -64,14 +65,20 @@ export class GroceryListWorkflows {
     const encoded = lists.flatMap((lists) => {
       const serialized = lists.map(FpUtils.serialized)
 
-      return FpUtils.mapParseErrors(serialized)
+      return FpUtils.collectValidationErrors(serialized)
     })
 
     return ApplicationResult.fromResult(encoded)
   }
 
-  private async fetchWithFilters(filters: GroceryListFindFilters) {
-    const lists = await this.groceryListRepo.findWithFilters(filters)
+  private async fetchWithFilters(
+    filters: GroceryListFindFilters,
+    paginationParams: PaginationParams,
+  ) {
+    const lists = await this.groceryListRepo.findWithFilters(
+      filters,
+      paginationParams,
+    )
     const encoded = lists.flatMap(FpUtils.paginatedSerialize)
 
     return ApplicationResult.fromResult(encoded)
@@ -79,7 +86,7 @@ export class GroceryListWorkflows {
 
   async getGroceryListsWithFilters(
     user: UserEntity,
-    filters: GetListsParams,
+    { filters, pagination }: GetListsParams,
   ): Promise<ApplicationResult<GetListsResult>> {
     const since = filters.sinceMs
       ? new Date(
@@ -93,21 +100,20 @@ export class GroceryListWorkflows {
       search: filters.search,
       status: filters.status,
       since,
-      page: filters.page,
-      limit: filters.limit,
-      sortBy: filters.sortBy,
-      sortOrder: filters.sortOrder,
     }
 
-    return await this.fetchWithFilters(repoFilters)
+    return await this.fetchWithFilters(repoFilters, pagination)
   }
 
   async fetchRecentLists(user: UserEntity) {
     const since = sevenDaysAgo()
-    return await this.fetchWithFilters({
-      userId: user.id,
-      since,
-    })
+    return await this.fetchWithFilters(
+      {
+        userId: user.id,
+        since,
+      },
+      {},
+    )
   }
 
   async getDashboardStats(

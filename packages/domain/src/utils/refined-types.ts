@@ -60,7 +60,8 @@ const DateTimeBase = S.asSchema(
       ],
     } satisfies JSONSchema7,
   }),
-)
+) as S.Schema<DT.Utc, Date, never> // union type will return first member, which is Date in our case
+// we prefer returning Date as it is more common in JavaScript/TypeScript, so easier interop with other libraries
 
 export type DateTimeType = S.Schema.Type<typeof DateTimeBase>
 export type DateTimeEncoded = S.Schema.Encoded<typeof DateTimeBase>

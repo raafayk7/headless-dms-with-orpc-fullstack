@@ -1,11 +1,7 @@
 import type { Result } from "@carbonteq/fp"
-import type { InviteNotFoundError } from "@domain/errors/invite.errors"
-import type { GroceryListType } from "../entities/grocery-list.entity"
-import type {
-  InviteEntity,
-  InviteRole,
-  InviteType,
-} from "../entities/invite.entity"
+import type { GroceryListType } from "@domain/grocery-list/grocery-list.entity"
+import type { InviteEntity, InviteRole, InviteType } from "./invite.entity"
+import type { InviteNotFoundError } from "./invite.errors"
 
 export interface InviteUpdateData {
   role?: InviteRole

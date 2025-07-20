@@ -1,16 +1,19 @@
 import type { UnitResult } from "@carbonteq/fp"
 import { Result as R } from "@carbonteq/fp"
-import { InviteExpiredError } from "@domain/errors/invite.errors"
+import {
+  GroceryListId,
+  type GroceryListType,
+} from "@domain/grocery-list/grocery-list.entity"
+import { InviteExpiredError } from "@domain/invite/invite.errors"
 import { BaseEntity, defineEntityStruct } from "@domain/utils/base.entity"
 import { DateTime, UUID } from "@domain/utils/refined-types"
 import { createEncoderDecoderBridge } from "@domain/utils/schema-utils"
 import { DateTime as DT, Schema as S } from "effect"
-import { GroceryListId, type GroceryListType } from "./grocery-list.entity"
 
 export const InviteRoleSchema = S.Literal("editor")
 const InviteId = UUID.pipe(S.brand("InviteId"))
 
-export const InviteSchema = defineEntityStruct({
+export const InviteSchema = defineEntityStruct("InviteId", {
   id: InviteId,
   listId: GroceryListId,
   token: S.String.pipe(S.minLength(1)),

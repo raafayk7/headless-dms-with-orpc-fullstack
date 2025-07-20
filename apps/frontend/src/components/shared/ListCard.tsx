@@ -1,4 +1,4 @@
-import type { GroceryListEncoded } from "@contract/schemas/grocery-list"
+import type { GroceryListEncoded } from "@domain/grocery-list/grocery-list.schemas"
 import { Badge, Card, Group, Text } from "@mantine/core"
 import { Clock } from "lucide-react"
 import LinkBtn from "../layout/LinkBtn"
@@ -37,7 +37,13 @@ export const ListCard = ({ list }: ListCardProps) => {
           </Text>
         </Group>
         <Group gap="xs">
-          <LinkBtn size="xs" to={`/lists/${list.id}`} variant="light">
+          <LinkBtn
+            params={{ id: list.id }}
+            preload="intent"
+            size="xs"
+            to="/lists/$id"
+            variant="light"
+          >
             View
           </LinkBtn>
         </Group>

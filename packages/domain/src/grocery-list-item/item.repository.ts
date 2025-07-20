@@ -3,10 +3,9 @@ import type {
   ItemEntity,
   ItemStatus,
   ItemType,
-  ItemUpdateDataEncoded,
 } from "@domain/grocery-list-item/item.entity"
 import type { UserType } from "@domain/user/user.entity"
-import type { RepoResult, RepoUnitResult } from "@domain/utils"
+import type { RepoResult } from "@domain/utils"
 import type { ItemNotFoundError } from "./item.errors"
 
 export type GroceryItemFilters = {
@@ -22,14 +21,15 @@ export abstract class ItemRepository {
   abstract findByList(list: GroceryListType): Promise<RepoResult<ItemEntity[]>>
 
   abstract update(
-    id: ItemType["id"],
-    updates: ItemUpdateDataEncoded,
+    item: ItemEntity,
   ): Promise<RepoResult<ItemEntity, ItemNotFoundError>>
 
   abstract delete(
     id: ItemType["id"],
-  ): Promise<RepoUnitResult<ItemNotFoundError>>
+  ): Promise<RepoResult<ItemEntity, ItemNotFoundError>>
 
-  abstract deleteByList(list: GroceryListType): Promise<RepoUnitResult>
+  abstract deleteByList(
+    list: GroceryListType,
+  ): Promise<RepoResult<ItemEntity["id"][]>>
   abstract count(filters: GroceryItemFilters): Promise<number>
 }

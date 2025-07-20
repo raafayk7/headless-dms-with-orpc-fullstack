@@ -20,7 +20,10 @@ export const NewListPage = () => {
 
   const form = useAppForm({
     defaultValues: { name: "", description: "", items: [] },
-    validators: { onSubmit: newGroceryListFormSchema },
+    validators: {
+      onSubmit: newGroceryListFormSchema,
+      onBlurAsync: newGroceryListFormSchema,
+    },
 
     onSubmit: async ({ value, formApi }) => {
       await newListMut.mutateAsync(value, {

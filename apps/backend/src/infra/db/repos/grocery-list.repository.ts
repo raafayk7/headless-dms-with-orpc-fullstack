@@ -6,7 +6,6 @@ import type {
 import { GroceryListEntity as GList } from "@domain/grocery-list/grocery-list.entity"
 import { GroceryListNotFoundError } from "@domain/grocery-list/grocery-list.errors"
 import {
-  type GroceryListCountFilters,
   type GroceryListFindFilters,
   GroceryListRepository,
 } from "@domain/grocery-list/grocery-list.repository"
@@ -14,12 +13,10 @@ import type { ItemEntity } from "@domain/grocery-list-item"
 import type { UserType } from "@domain/user/user.entity"
 import { FpUtils, type RepoResult, type RepoUnitResult } from "@domain/utils"
 import {
-  calculateOffset,
-  createPaginatedResult,
-  getDefaultPagination,
   type Paginated,
+  type PaginationParams,
+  PaginationUtils,
 } from "@domain/utils/pagination.utils"
-import { DateTime } from "@domain/utils/refined-types"
 import { and, asc, desc, eq, gte, ilike } from "drizzle-orm"
 import { injectable } from "tsyringe"
 import type { AppDatabase } from "../conn"
@@ -57,8 +54,6 @@ export class DrizzleGroceryListRepository extends GroceryListRepository {
 
     const res = await encoded
       .map(async ([listData, itemsData]) => {
-        console.debug("List data", listData)
-        console.debug("Items data", itemsData)
         await this.db.transaction(async (tx) => {
           await tx.insert(groceryLists).values({
             ...listData,
@@ -129,24 +124,16 @@ export class DrizzleGroceryListRepository extends GroceryListRepository {
   async delete(
     id: GroceryListType["id"],
   ): Promise<RepoUnitResult<GroceryListNotFoundError>> {
-    try {
-      const result = await this.db
-        .update(groceryLists)
-        .set({
-          isActive: false,
-          updatedAt: DateTime.now(),
-        })
-        .where(eq(groceryLists.id, id))
-        .returning({ id: groceryLists.id })
+    const result = await this.db
+      .delete(groceryLists)
+      .where(eq(groceryLists.id, id))
+      .returning({ id: groceryLists.id })
 
-      if (result.length === 0) {
-        return R.Err(new GroceryListNotFoundError(id))
-      }
-
-      return R.UNIT_RESULT
-    } catch {
+    if (result.length === 0) {
       return R.Err(new GroceryListNotFoundError(id))
     }
+
+    return R.UNIT_RESULT
   }
 
   async findByUserId(
@@ -163,16 +150,67 @@ export class DrizzleGroceryListRepository extends GroceryListRepository {
 
   async findWithFilters(
     filters: GroceryListFindFilters,
+    paginationParams: PaginationParams,
   ): Promise<RepoResult<Paginated<GroceryListEntity>>> {
-    const pagination = getDefaultPagination({
-      page: filters.page,
-      limit: filters.limit,
-      sortOrder: filters.sortOrder,
+    const pagination = PaginationUtils.getDefaultPagination({
+      page: paginationParams.page,
+      limit: paginationParams.limit,
+      sortOrder: paginationParams.sortOrder,
     })
 
-    const offset = calculateOffset(pagination.page, pagination.limit)
+    const offset = PaginationUtils.calculateOffset(
+      pagination.page,
+      pagination.limit,
+    )
 
-    const conditions = [eq(groceryLists.userId, filters.userId)]
+    const where = DrizzleGroceryListRepository.buildFindFilters(filters)
+
+    const orderBy =
+      paginationParams.sortBy === "name"
+        ? pagination.sortOrder === "asc"
+          ? asc(groceryLists.name)
+          : desc(groceryLists.name)
+        : pagination.sortOrder === "asc"
+          ? asc(groceryLists.updatedAt)
+          : desc(groceryLists.updatedAt)
+
+    const totalCount = await this.db.$count(groceryLists, where)
+
+    const rows = await this.db
+      .select()
+      .from(groceryLists)
+      .where(where)
+      .orderBy(orderBy)
+      .limit(pagination.limit)
+      .offset(offset)
+
+    const listsResult = mapper.mapMany(rows)
+
+    return listsResult.map((lists) =>
+      PaginationUtils.createPaginatedResult(
+        lists,
+        totalCount,
+        pagination.page,
+        pagination.limit,
+      ),
+    )
+  }
+
+  async count(filters: GroceryListFindFilters): Promise<number> {
+    const conditions = DrizzleGroceryListRepository.buildFindFilters(filters)
+
+    const c = await this.db.$count(groceryLists, conditions)
+
+    return c
+  }
+
+  private static buildFindFilters(filters: GroceryListFindFilters) {
+    const conditions = []
+
+    if (filters.userId) {
+      conditions.push(eq(groceryLists.userId, filters.userId))
+    }
+
     if (filters.search) {
       conditions.push(ilike(groceryLists.name, `%${filters.search}%`))
     }
@@ -185,46 +223,6 @@ export class DrizzleGroceryListRepository extends GroceryListRepository {
       conditions.push(gte(groceryLists.updatedAt, filters.since))
     }
 
-    const orderBy =
-      filters.sortBy === "name"
-        ? pagination.sortOrder === "asc"
-          ? asc(groceryLists.name)
-          : desc(groceryLists.name)
-        : pagination.sortOrder === "asc"
-          ? asc(groceryLists.updatedAt)
-          : desc(groceryLists.updatedAt)
-
-    const totalCount = await this.db.$count(groceryLists, and(...conditions))
-
-    const rows = await this.db
-      .select()
-      .from(groceryLists)
-      .where(and(...conditions))
-      .orderBy(orderBy)
-      .limit(pagination.limit)
-      .offset(offset)
-
-    const listsResult = mapper.mapMany(rows)
-
-    return listsResult.map((lists) =>
-      createPaginatedResult(
-        lists,
-        totalCount,
-        pagination.page,
-        pagination.limit,
-      ),
-    )
-  }
-
-  async count(filters: GroceryListCountFilters): Promise<number> {
-    const c = await this.db.$count(
-      groceryLists,
-      and(
-        filters.userId ? eq(groceryLists.userId, filters.userId) : undefined,
-        filters.since ? gte(groceryLists.updatedAt, filters.since) : undefined,
-      ),
-    )
-
-    return c
+    return conditions.length > 0 ? and(...conditions) : undefined
   }
 }

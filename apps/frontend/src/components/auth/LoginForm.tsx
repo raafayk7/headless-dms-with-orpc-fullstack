@@ -13,7 +13,7 @@ const LoginForm = ({ onLoginSuccess }: LoginFormProps) => {
 
   const form = useAppForm({
     defaultValues: { email: "", password: "" },
-    validators: { onSubmit: loginFormSchema },
+    validators: { onSubmit: loginFormSchema, onBlurAsync: loginFormSchema },
 
     onSubmit: async ({ value }) => {
       await loginMut.mutateAsync(value, {

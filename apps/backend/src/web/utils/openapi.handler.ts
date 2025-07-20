@@ -17,9 +17,11 @@ export const addOpenApiHandler = async (
     interceptors: [onError(validationErrMap)],
     clientInterceptors: [],
     plugins: [
+      // @ts-expect-error version mismatch
       new CORSPlugin(),
+      // @ts-expect-error version mismatch
       new ResponseHeadersPlugin(),
-      // @ts-expect-error version mismatch properly
+      // @ts-expect-error version mismatch
       new ZodSmartCoercionPlugin(),
     ],
   })

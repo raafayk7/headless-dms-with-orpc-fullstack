@@ -13,8 +13,8 @@ export const DEFAULT_PAGE = 1
 export const DEFAULT_LIMIT = 10
 export const DEFAULT_SORT_ORDER = "asc" as const
 
-export const PaginatedResultSchema = <In, Out>(
-  itemSchema: S.Schema<In, Out, never>,
+export const PaginatedResultSchema = <A, I>(
+  itemSchema: S.Schema<A, I, never>,
 ) =>
   S.asSchema(
     S.Struct({
@@ -38,7 +38,7 @@ export type Paginated<T> = {
   hasPrevious: boolean
 }
 
-export const getDefaultPagination = (params?: Partial<PaginationParams>) => {
+const getDefaultPagination = (params?: Partial<PaginationParams>) => {
   return {
     page: params?.page ?? DEFAULT_PAGE,
     limit: params?.limit ?? DEFAULT_LIMIT,
@@ -46,11 +46,11 @@ export const getDefaultPagination = (params?: Partial<PaginationParams>) => {
   }
 }
 
-export const calculateOffset = (page: number, limit: number): number => {
+const calculateOffset = (page: number, limit: number): number => {
   return (page - 1) * limit
 }
 
-export const createPaginatedResult = <T>(
+const createPaginatedResult = <T>(
   items: T[],
   totalCount: number,
   page: number,
@@ -68,3 +68,9 @@ export const createPaginatedResult = <T>(
     hasPrevious: page > 1,
   }
 }
+
+export const PaginationUtils = {
+  calculateOffset,
+  getDefaultPagination,
+  createPaginatedResult,
+} as const
