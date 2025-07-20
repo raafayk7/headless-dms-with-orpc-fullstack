@@ -1,7 +1,7 @@
 import { Result } from "@carbonteq/fp"
 import { Either, Schema as S, type SchemaAST } from "effect"
 import type { ValidationError } from "./base.errors"
-import { parseErrorToValidationError } from "./valididation.utils"
+import { parseErrorToValidationError } from "./validation.utils"
 
 // From https://effect.website/docs/schema/basic-usage/#simplifying-tagged-structs-with-taggedstruct
 // Allows the absence of _tag in decode ops

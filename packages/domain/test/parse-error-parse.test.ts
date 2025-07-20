@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import { parseErrorToValidationError } from "@domain/utils/valididation.utils"
+import { parseErrorToValidationError } from "@domain/utils/validation.utils"
 import { Schema as S } from "effect"
 
 describe("ParseError to ValidationError Conversion", () => {

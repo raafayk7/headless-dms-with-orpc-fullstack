@@ -4,7 +4,7 @@ import { ValidationError } from "@domain/utils/base.errors"
 import {
   parseErrorsToValidationError,
   validationErrorsToSingle,
-} from "@domain/utils/valididation.utils"
+} from "@domain/utils/validation.utils"
 import { Schema as S } from "effect"
 
 describe("Validation Error Utils", () => {

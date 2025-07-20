@@ -1,7 +1,7 @@
 import { Result } from "@carbonteq/fp"
 import { GroceryListCreateSchema } from "@domain/grocery-list/grocery-list.entity"
 import { ComposeUtils } from "@domain/utils/compose.utils"
-import { parseErrorToValidationError } from "@domain/utils/valididation.utils"
+import { parseErrorToValidationError } from "@domain/utils/validation.utils"
 import { Either, Schema as S } from "effect"
 
 // const effectSchema = S.Struct({

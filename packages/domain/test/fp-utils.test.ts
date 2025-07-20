@@ -10,7 +10,7 @@ import {
   resultToEither,
 } from "@domain/utils/fp-utils"
 import type { Paginated } from "@domain/utils/pagination.utils"
-import { parseErrorToValidationError } from "@domain/utils/valididation.utils"
+import { parseErrorToValidationError } from "@domain/utils/validation.utils"
 import { Effect, Either, Schema as S } from "effect"
 
 test("eitherToResult - converts Either.right to Result.Ok", () => {

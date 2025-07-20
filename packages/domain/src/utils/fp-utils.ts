@@ -6,7 +6,7 @@ import type { Paginated } from "./pagination.utils"
 import {
   parseErrorsToValidationError,
   validationErrorsToSingle,
-} from "./valididation.utils"
+} from "./validation.utils"
 
 export const eitherToResult = <R, L>(e: Either.Either<R, L>): Result<R, L> =>
   Either.match(e, {
