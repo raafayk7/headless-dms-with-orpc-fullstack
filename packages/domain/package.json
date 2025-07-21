@@ -7,6 +7,11 @@
   "author": "",
   "license": "ISC",
   "files": ["src"],
+  "scripts": {
+    "lint": "biome check",
+    "check-types": "tsgo --noEmit --pretty",
+    "test": "bun test"
+  },
   "exports": {
     ".": {
       "import": "./src/index.ts",

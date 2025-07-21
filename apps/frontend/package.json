@@ -9,7 +9,8 @@
     "build": "vite build",
     "start": "vite start",
     "lint": "biome check",
-    "check-types": "tsc --noEmit --pretty"
+    "check-types": "tsgo --noEmit --pretty",
+    "test": "echo 'no tests'"
   },
   "dependencies": {
     "@mantine/core": "^8.1.3",

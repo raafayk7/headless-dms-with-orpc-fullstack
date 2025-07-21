@@ -5,6 +5,11 @@
   "description": "Shared TypeScript configuration for the project",
   "private": true,
   "license": "MIT",
+  "scripts": {
+    "lint": "echo ok",
+    "check-types": "echo ok",
+    "test": "echo ok"
+  },
   "publishConfig": {
     "access": "public"
   },

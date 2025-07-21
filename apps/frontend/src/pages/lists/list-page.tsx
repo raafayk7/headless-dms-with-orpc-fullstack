@@ -13,7 +13,7 @@ import {
 } from "@mantine/core"
 import { useDebouncedValue } from "@mantine/hooks"
 import { Link, useNavigate, useSearch } from "@tanstack/react-router"
-import { Plus, Search, X } from "lucide-react"
+import { Plus, Search } from "lucide-react"
 import { useCallback, useEffect, useState } from "react"
 
 export const GroceryListsListPage = () => {

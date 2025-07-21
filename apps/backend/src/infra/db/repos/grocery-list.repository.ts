@@ -17,13 +17,13 @@ import {
   type PaginationParams,
   PaginationUtils,
 } from "@domain/utils/pagination.utils"
+import { buildFilterConditions } from "@infra/db/db.utils"
 import { and, asc, desc, eq, gte, ilike } from "drizzle-orm"
 import { injectable } from "tsyringe"
 import type { AppDatabase } from "../conn"
 import { InjectDb } from "../conn"
 import { groceryListItems, groceryLists } from "../schema"
 import { enhanceEntityMapper } from "./repo.utils"
-import { buildFilterConditions } from "@infra/db/db.utils"
 
 const mapper = enhanceEntityMapper((row: typeof groceryLists.$inferSelect) =>
   GList.fromEncoded({
