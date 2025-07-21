@@ -46,7 +46,7 @@ export const simpleSchemaDto = <Name extends string, A, I>(
     ) {
       if (token !== RuntimeValidationToken) {
         throw new Error(
-          "SimpleDto should only be instantiated through the static create method.",
+          `${className} should only be instantiated through the static create method. Use ${className}.create(input) to create a valid instance.`,
         )
       }
     }
