@@ -10,7 +10,8 @@ describe("DateTime Union Deduplication", () => {
       oneOf: [
         {
           type: "number",
-          description: "a number to be decoded into a DateTime.Utc",
+          format: "timestamp",
+          description: "a Date to be decoded into a DateTime.Utc",
         },
         {
           type: "string",

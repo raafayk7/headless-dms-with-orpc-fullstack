@@ -2,7 +2,6 @@ import { describe, expect, test } from "bun:test"
 import { Schema as S } from "effect"
 import { convertEffectSchemaToOpenAPI } from "../effect-schema-converter"
 
-// Import all test suites
 import "./effect-schema-converter/primitive-types.test"
 import "./effect-schema-converter/object-types.test"
 import "./effect-schema-converter/array-types.test"
