@@ -23,6 +23,7 @@ import type { AppDatabase } from "../conn"
 import { InjectDb } from "../conn"
 import { groceryListItems, groceryLists } from "../schema"
 import { enhanceEntityMapper } from "./repo.utils"
+import { buildFilterConditions } from "@infra/db/db.utils"
 
 const mapper = enhanceEntityMapper((row: typeof groceryLists.$inferSelect) =>
   GList.fromEncoded({
@@ -208,23 +209,34 @@ export class DrizzleGroceryListRepository extends GroceryListRepository {
   }
 
   private static buildFindFilters(filters: GroceryListFindFilters) {
-    const conditions = []
+    const conditions = buildFilterConditions(filters, {
+      userId: (id) => eq(groceryLists.userId, id),
+      search: (search) => ilike(groceryLists.name, `%${search}%`),
+      status: (s) =>
+        s === "active"
+          ? eq(groceryLists.isActive, true)
+          : s === "inactive"
+            ? eq(groceryLists.isActive, false)
+            : undefined,
+      since: (d) => gte(groceryLists.updatedAt, d),
+    })
 
-    if (filters.userId) {
-      conditions.push(eq(groceryLists.userId, filters.userId))
-    }
-
-    if (filters.search) {
-      conditions.push(ilike(groceryLists.name, `%${filters.search}%`))
-    }
-    if (filters.status === "active") {
-      conditions.push(eq(groceryLists.isActive, true))
-    } else if (filters.status === "inactive") {
-      conditions.push(eq(groceryLists.isActive, false))
-    }
-    if (filters.since) {
-      conditions.push(gte(groceryLists.updatedAt, filters.since))
-    }
+    // const conditions = []
+    // if (filters.userId) {
+    //   conditions.push(eq(groceryLists.userId, filters.userId))
+    // }
+    //
+    // if (filters.search) {
+    //   conditions.push(ilike(groceryLists.name, `%${filters.search}%`))
+    // }
+    // if (filters.status === "active") {
+    //   conditions.push(eq(groceryLists.isActive, true))
+    // } else if (filters.status === "inactive") {
+    //   conditions.push(eq(groceryLists.isActive, false))
+    // }
+    // if (filters.since) {
+    //   conditions.push(gte(groceryLists.updatedAt, filters.since))
+    // }
 
     return conditions.length > 0 ? and(...conditions) : undefined
   }
