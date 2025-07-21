@@ -81,7 +81,9 @@ export const getIssuesFromParseErrorIssue = (
     case "Refinement": {
       const descAnnot = getDescriptionAnnotation(issue.ast)
       if (descAnnot._tag === "None") {
-        throw new Error("Transformation without description annotation")
+        throw new Error(
+          `Refinement transformation failed: Missing description annotation for AST node '${JSON.stringify(issue.ast)}'. A description annotation is required to provide context for the expected type.`,
+        )
       }
       const expectedType = descAnnot.value
 
@@ -96,7 +98,7 @@ export const getIssuesFromParseErrorIssue = (
     case "Transformation": {
       const descAnnot = getDescriptionAnnotation(issue.ast.from)
       if (descAnnot._tag === "None") {
-        throw new Error("Transformation without description annotation")
+        throw new Error("Transformation case without description annotation")
       }
       const expectedType = descAnnot.value
 
@@ -109,7 +111,9 @@ export const getIssuesFromParseErrorIssue = (
     }
 
     default: {
-      throw new Error(`Not implemented issue type: ${issue._tag}`)
+      throw new Error(
+        `Unsupported issue type '${issue._tag}' encountered in 'getIssuesFromParseErrorIssue'. Please ensure all issue types are implemented or report this issue to the development team.`,
+      )
     }
   }
 }
