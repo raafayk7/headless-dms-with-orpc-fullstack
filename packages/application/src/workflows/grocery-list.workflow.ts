@@ -165,7 +165,17 @@ export class GroceryListWorkflows {
     return ApplicationResult.fromResult(result)
   }
 
-  async deleteGroceryList(_listId: string): Promise<ApplicationResult<void>> {
-    return ApplicationResult.Err(new Error("Not implemented yet"))
+  async deleteGroceryList(
+    listId: GroceryListType["id"],
+    user: UserEntity,
+  ): Promise<ApplicationResult<{ id: GroceryListType["id"] }>> {
+    const list = await this.groceryListRepo.findById(listId)
+    const res = await list
+      .flatMap((l) => l.ensureIsOwner(user))
+      .flatMap(async (l) => this.groceryListRepo.delete(l.id))
+      .map((_) => ({ id: listId }))
+      .toPromise()
+
+    return ApplicationResult.fromResult(res)
   }
 }

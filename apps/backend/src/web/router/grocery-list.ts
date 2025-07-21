@@ -49,7 +49,13 @@ const updateGroceryHandler = base.updateGroceryList.handler(
 
 const deleteGroceryHandler = base.deleteGroceryList.handler(
   async ({ input, context }) => {
-    throw new Error("Not implemented yet")
+    const groceryListFlows = container.resolve(GroceryListWorkflows)
+    const result = await groceryListFlows.deleteGroceryList(
+      input.params.id,
+      context.user,
+    )
+
+    return handleAppResult(result)
   },
 )
 

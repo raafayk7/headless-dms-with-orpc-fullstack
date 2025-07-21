@@ -124,12 +124,15 @@ export class DrizzleGroceryListRepository extends GroceryListRepository {
   async delete(
     id: GroceryListType["id"],
   ): Promise<RepoUnitResult<GroceryListNotFoundError>> {
-    const result = await this.db
-      .delete(groceryLists)
-      .where(eq(groceryLists.id, id))
-      .returning({ id: groceryLists.id })
+    const res = await this.db.transaction(async (tx) => {
+      await tx.delete(groceryListItems).where(eq(groceryListItems.listId, id))
+      return await tx
+        .delete(groceryLists)
+        .where(eq(groceryLists.id, id))
+        .returning({ id: groceryLists.id })
+    })
 
-    if (result.length === 0) {
+    if (res.length === 0) {
       return R.Err(new GroceryListNotFoundError(id))
     }
 

@@ -16,6 +16,10 @@ import { Schema as S } from "effect"
 
 const groceryListBase = appAuthenticatedBase
 
+const groceryListIdStruct = S.Struct({
+  id: GroceryListId,
+})
+
 export const getStats = groceryListBase
   .route({
     method: "GET",
@@ -57,9 +61,7 @@ export const getListById = groceryListBase
   .input(
     S.standardSchemaV1(
       S.Struct({
-        params: S.Struct({
-          id: GroceryListId,
-        }),
+        params: groceryListIdStruct,
       }),
     ),
   )
@@ -98,13 +100,11 @@ export const deleteGroceryList = groceryListBase
   .input(
     S.standardSchemaV1(
       S.Struct({
-        params: S.Struct({
-          id: GroceryListId,
-        }),
+        params: groceryListIdStruct,
       }),
     ),
   )
-  .output(S.standardSchemaV1(S.Void))
+  .output(S.standardSchemaV1(groceryListIdStruct))
 
 export default {
   getStats,

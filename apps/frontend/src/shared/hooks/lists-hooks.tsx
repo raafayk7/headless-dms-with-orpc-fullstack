@@ -47,7 +47,7 @@ export const useLists = (params: Params = {}) =>
 
 export const useNewListMutation = () => {
   const queryClient = useQueryClient()
-  const navigate = useNavigate()
+  const navigate = useNavigate({ from: "/lists/new" })
 
   const listsKey = orpc.authenticated.groceryList.getLists.key()
 
@@ -71,11 +71,43 @@ export const useNewListMutation = () => {
           data,
         )
         toast.success({ message: `List ${data.name} created successfully!` })
-        navigate({
+        await navigate({
           to: `/lists/${data.id}`,
           from: "/lists/new",
           replace: false,
         })
+      },
+    })
+
+  return useMutation(mutOpts, queryClient)
+}
+
+export const useDeleteListMutation = () => {
+  const queryClient = useQueryClient()
+  const navigate = useNavigate({ from: "/lists/$id" })
+
+  const mutOpts =
+    orpc.authenticated.groceryList.deleteGroceryList.mutationOptions({
+      throwOnError: false,
+      onError: (err) => {
+        toast.error({
+          title: "Failed to delete grocery list",
+          message: err.message,
+        })
+      },
+      onSuccess: async (data) => {
+        toast.success({ message: "List deleted successfully!" })
+
+        queryClient.removeQueries({
+          queryKey: orpc.authenticated.groceryList.getListById.key({
+            input: { params: { id: data.id } },
+          }),
+        })
+        queryClient.invalidateQueries({
+          queryKey: orpc.authenticated.groceryList.getLists.key(),
+        })
+
+        await navigate({ to: "/lists" })
       },
     })
 

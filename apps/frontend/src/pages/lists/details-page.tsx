@@ -1,4 +1,4 @@
-import { useList } from "@app/shared/hooks/lists-hooks"
+import { useDeleteListMutation, useList } from "@app/shared/hooks/lists-hooks"
 import {
   Badge,
   Button,
@@ -21,34 +21,14 @@ export const ListDetailsPage = ({ id }: ListDetailsPageProps) => {
   // const _queryClient = useQueryClient()
 
   const { data: list } = useList(id)
+  const deleteMut = useDeleteListMutation()
 
-  // const handleDelete = async () => {
-  //   if (!confirm("Are you sure you want to delete this list?")) return
-  //
-  //   try {
-  //     await orpc.authenticated.groceryList.deleteGroceryList({
-  //       params: { id },
-  //     })
-  //
-  //     const groceryListKey = orpc.authenticated.groceryList.getLists.key()
-  //
-  //     toast.success({ message: "List deleted successfully!" })
-  //
-  //     // Invalidate lists query to refresh the lists
-  //     queryClient.invalidateQueries({
-  //       queryKey: ["groceryList", "getLists"],
-  //     })
-  //
-  //     // Navigate back to lists
-  //     navigate({ to: "/lists" })
-  //   } catch (error) {
-  //     toast.error({
-  //       message: "Failed to delete list",
-  //       title: "Error",
-  //     })
-  //   }
-  // }
-  //
+  const handleDelete = async () => {
+    if (!confirm("Are you sure you want to delete this list?")) return
+
+    await deleteMut.mutateAsync({ params: { id } })
+  }
+
   // const handleToggleActive = async () => {
   //   try {
   //     await orpcClient.authenticated.groceryList.updateGroceryList({
@@ -135,7 +115,7 @@ export const ListDetailsPage = ({ id }: ListDetailsPageProps) => {
                 <Button
                   color="red"
                   leftSection={<Trash2 size={16} />}
-                  // onClick={handleDelete}
+                  onClick={handleDelete}
                   variant="light"
                 >
                   Delete
