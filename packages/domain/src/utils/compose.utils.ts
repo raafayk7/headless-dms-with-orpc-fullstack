@@ -65,17 +65,7 @@ export const ComposeUtils = {
     // biome-ignore lint/suspicious/noExplicitAny: Better type inference
       <U extends Record<string, any>[], M = Merged<U>>(...toAdd: U) =>
       <T extends Record<string, unknown>>(base: T): T & M => {
-        const merged = {
-          ...base,
-        } as T & M
-
-        type KeyOfMerged = keyof T & keyof M
-
-        for (const item of toAdd) {
-          for (const key in item) {
-            merged[key as KeyOfMerged] = item[key]
-          }
-        }
+        const merged = Object.assign({}, base, ...toAdd) as T & M
 
         return merged
       },
