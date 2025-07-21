@@ -8,7 +8,7 @@ import {
   UnauthorizedError,
   ValidationError,
 } from "@domain/utils/base.errors"
-import { ParseError } from "@effect/schema/ParseResult"
+import { ParseError } from "effect/ParseResult"
 
 export enum AppErrStatus {
   NotFound = "NotFound",

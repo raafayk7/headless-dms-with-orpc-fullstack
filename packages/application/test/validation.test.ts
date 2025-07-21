@@ -34,7 +34,7 @@ describe("Validation Utils", () => {
     expect(result.isErr()).toBe(true)
     const error = result.unwrapErr()
     expect(error.name).toBe("ValidationError")
-    expect(error.message).toContain("NonEmptyString")
+    expect(error.message).toContain("non empty string")
   })
 
   test("should handle missing fields", () => {
