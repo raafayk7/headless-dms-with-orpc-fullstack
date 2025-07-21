@@ -45,18 +45,12 @@ export class InviteEntity extends BaseEntity implements InviteType {
   }
 
   static generateInvite(list: GroceryListType): InviteEntity {
-    const id = InviteId.make(UUID.new())
-    const token = crypto.randomUUID()
-    const expiresAt = InviteEntity.calculateExpirationDate()
-
     return new InviteEntity({
-      id,
-      listId: list.id,
-      token,
+      ...InviteSchema.baseInit(),
       role: InviteEntity.getDefaultRole(),
-      expiresAt,
-      createdAt: DT.unsafeNow(),
-      updatedAt: DT.unsafeNow(),
+      listId: list.id,
+      expiresAt: InviteEntity.calculateExpirationDate(),
+      token: crypto.randomUUID(),
     })
   }
 
