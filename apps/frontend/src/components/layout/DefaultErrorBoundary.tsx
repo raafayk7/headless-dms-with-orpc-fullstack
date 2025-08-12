@@ -45,16 +45,7 @@ const DefaultErrorBoundary = ({ error }: ErrorComponentProps) => {
               Home
             </LinkBtn>
           ) : (
-            <LinkBtn
-              fw="bold"
-              onClick={(e) => {
-                e.preventDefault()
-                window.history.back()
-              }}
-              to="/"
-              tt="uppercase"
-              variant="light"
-            >
+            <LinkBtn fw="bold" to="/" tt="uppercase" variant="light">
               Go Back
             </LinkBtn>
           )}

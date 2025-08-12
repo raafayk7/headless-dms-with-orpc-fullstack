@@ -1,26 +1,17 @@
-import LoginForm from "@app/components/auth/LoginForm"
+import { LoginPage } from "@app/pages/auth/login-page"
 import { createFileRoute } from "@tanstack/react-router"
 import { type } from "arktype"
-import { useCallback } from "react"
 
-const LoginPage = () => {
+const LoginPageWrapper = () => {
   // https://tanstack.com/router/latest/docs/framework/react/guide/render-optimizations#fine-grained-selectors
   const redirectedTo = Route.useSearch({ select: (state) => state.redirect })
   const navigateTo = Route.useNavigate()
 
-  const onLoginSuccess = useCallback(async () => {
-    if (redirectedTo) {
-      navigateTo({ to: redirectedTo, from: Route.path })
-    } else {
-      navigateTo({ to: "/", from: Route.path })
-    }
-  }, [navigateTo, redirectedTo])
-
-  return <LoginForm onLoginSuccess={onLoginSuccess} />
+  return <LoginPage navigate={navigateTo} redirectTo={redirectedTo} />
 }
 
 export const Route = createFileRoute("/_public/auth/login")({
-  component: LoginPage,
+  component: LoginPageWrapper,
   head: () => ({ meta: [{ title: "Login to Carbonteq Starter" }] }),
   // https://tanstack.com/router/latest/docs/framework/react/guide/data-loading#using-search-params-in-loaders
   //

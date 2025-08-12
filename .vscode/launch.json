@@ -1,0 +1,16 @@
+{
+  "configurations": [
+    {
+      "type": "bun",
+      "request": "launch",
+      "name": "Debug Server",
+      "program": "${workspaceFolder}/apps/backend/src/web/server.ts",
+      "cwd": "${workspaceFolder}/apps/backend",
+      "watchMode": false,
+      "stopOnEntry": true,
+      "noDebug": false,
+      "runtime": "bun",
+      "runtimeArgs": []
+    }
+  ]
+}

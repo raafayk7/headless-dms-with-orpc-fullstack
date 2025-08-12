@@ -1,4 +1,9 @@
-import { z } from "zod/v4"
+// import {
+//   NewUserSchema as DomainNewUserSchema,
+//   UserSchema as DomainUserSchema,
+// } from "@domain/user/user.entity"
+// import type { JSONSchema7 } from "json-schema"
+import z from "zod/v4"
 
 export const UserSchema = z
   .object({
@@ -24,6 +29,36 @@ export const UserSchema = z
     ],
   })
 export type User = z.infer<typeof UserSchema>
+
+// export const UserSchema = DomainUserSchema.annotations({
+//   jsonSchema: {
+//     description: "User object representing a registered user in the system.",
+//     examples: [
+//       {
+//         id: "c4489351-5a80-4b6e-9d70-d46c83742bac",
+//         name: "John Doe",
+//         email: "john.doe@dev.com",
+//         emailVerified: false,
+//         createdAt: Date.now(),
+//         updatedAt: Date.now(),
+//       },
+//     ],
+//   } satisfies JSONSchema7,
+// })
+
+// export const NewUserSchema = DomainNewUserSchema.annotations({
+//   jsonSchema: {
+//     description:
+//       "Schema for creating a new user, including name, email, and password.",
+//     examples: [
+//       {
+//         name: "John Doe",
+//         email: "john.doe@test.com",
+//         password: "sometestpass-don't user it in prod",
+//       },
+//     ],
+//   } satisfies JSONSchema7,
+// })
 
 export const NewUserSchema = UserSchema.pick({
   name: true,

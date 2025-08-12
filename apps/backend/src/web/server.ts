@@ -11,16 +11,20 @@ import { container } from "tsyringe"
 import { initAuthRouter } from "./router/auth"
 import config from "@/infra/config"
 import { addOpenApiDocs } from "./utils/openapidocs.handler"
+import { wireDi } from "@/infra/di"
+import { CORS_TRUSTED_ORIGINS } from "@/constants"
+
+wireDi()
 
 const app = new Hono()
 app.use(logger())
 app.use(
   "/*",
   cors({
-    origin: [config.app.TRUSTED_ORIGIN, "http://localhost:3000"],
-    allowMethods: ["GET", "POST", "OPTIONS"],
-    allowHeaders: ["Content-Type", "Authorization"],
+    origin: CORS_TRUSTED_ORIGINS,
+    allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH", "HEAD"],
     credentials: true,
+    exposeHeaders: ["Set-Cookie"],
   }),
 )
 

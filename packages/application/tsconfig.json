@@ -1,0 +1,14 @@
+{
+  "extends": "@repo/typescript-config/bun.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "paths": {
+      "@application/*": ["./src/*"],
+      "@domain/*": ["../domain/src/*"]
+    }
+  },
+  "include": ["src", "test", "./*.ts"],
+  "exclude": ["node_modules"]
+}

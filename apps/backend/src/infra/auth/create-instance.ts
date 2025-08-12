@@ -5,13 +5,11 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle"
 import { APIError, createAuthMiddleware } from "better-auth/api"
 import { openAPI } from "better-auth/plugins"
 import { z } from "zod/v4"
+import { CORS_TRUSTED_ORIGINS } from "@/constants"
 import type { AppDatabase } from "../db/conn"
 
 const beforeHooks = createAuthMiddleware(async (ctx) => {
-  console.debug("beforeHooks: request received", ctx.path)
   if (ctx.path === "/sign-up/email") {
-    console.debug("beforeHooks: sign-up request", ctx.body)
-
     const validationResult = NewUserSchema.safeParse(ctx.body)
 
     if (!validationResult.success) {
@@ -46,11 +44,22 @@ export const createBetterAuthInstance = <T extends Record<string, any>>(
       },
     },
     appName: config.app.APP_NAME,
-    trustedOrigins: [config.app.TRUSTED_ORIGIN, "http://localhost:3000"],
+    trustedOrigins: CORS_TRUSTED_ORIGINS,
     plugins: [openAPI({ disableDefaultReference: true })],
     // https://www.better-auth.com/docs/guides/optimizing-for-performance#cookie-cache
-    session: { cookieCache: { enabled: true, maxAge: 60 * 5 } }, // check session in database every 5 minutes
-    advanced: { database: { generateId: false } }, // generate uuids via drizzle
+
+    // TODO: add redis for shared session cache storage
+    // secondaryStorage: redisThing,
+
+    session: {
+      cookieCache: { enabled: true, maxAge: 60 * 5 }, // check session in database every 5 minutes
+      expiresIn: 60 * 60 * 24 * 7, // 7 days
+      updateAge: 60 * 60 * 24, // update session every day
+    },
+
+    advanced: {
+      database: { generateId: false }, // generate uuids via drizzle
+    },
 
     // https://www.better-auth.com/docs/concepts/hooks#example-enforce-email-domain-restriction
     hooks: {

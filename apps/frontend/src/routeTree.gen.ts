@@ -12,8 +12,11 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as PublicRouteImport } from './routes/_public'
 import { Route as PrivateRouteImport } from './routes/_private'
 import { Route as PrivateIndexRouteImport } from './routes/_private/index'
+import { Route as PrivateListsIndexRouteImport } from './routes/_private/lists/index'
 import { Route as PublicAuthRegisterRouteImport } from './routes/_public/auth/register'
 import { Route as PublicAuthLoginRouteImport } from './routes/_public/auth/login'
+import { Route as PrivateListsNewRouteImport } from './routes/_private/lists/new'
+import { Route as PrivateListsIdRouteImport } from './routes/_private/lists/$id'
 
 const PublicRoute = PublicRouteImport.update({
   id: '/_public',
@@ -28,6 +31,11 @@ const PrivateIndexRoute = PrivateIndexRouteImport.update({
   path: '/',
   getParentRoute: () => PrivateRoute,
 } as any)
+const PrivateListsIndexRoute = PrivateListsIndexRouteImport.update({
+  id: '/lists/',
+  path: '/lists/',
+  getParentRoute: () => PrivateRoute,
+} as any)
 const PublicAuthRegisterRoute = PublicAuthRegisterRouteImport.update({
   id: '/auth/register',
   path: '/auth/register',
@@ -38,37 +46,71 @@ const PublicAuthLoginRoute = PublicAuthLoginRouteImport.update({
   path: '/auth/login',
   getParentRoute: () => PublicRoute,
 } as any)
+const PrivateListsNewRoute = PrivateListsNewRouteImport.update({
+  id: '/lists/new',
+  path: '/lists/new',
+  getParentRoute: () => PrivateRoute,
+} as any)
+const PrivateListsIdRoute = PrivateListsIdRouteImport.update({
+  id: '/lists/$id',
+  path: '/lists/$id',
+  getParentRoute: () => PrivateRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof PrivateIndexRoute
+  '/lists/$id': typeof PrivateListsIdRoute
+  '/lists/new': typeof PrivateListsNewRoute
   '/auth/login': typeof PublicAuthLoginRoute
   '/auth/register': typeof PublicAuthRegisterRoute
+  '/lists': typeof PrivateListsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof PrivateIndexRoute
+  '/lists/$id': typeof PrivateListsIdRoute
+  '/lists/new': typeof PrivateListsNewRoute
   '/auth/login': typeof PublicAuthLoginRoute
   '/auth/register': typeof PublicAuthRegisterRoute
+  '/lists': typeof PrivateListsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_private': typeof PrivateRouteWithChildren
   '/_public': typeof PublicRouteWithChildren
   '/_private/': typeof PrivateIndexRoute
+  '/_private/lists/$id': typeof PrivateListsIdRoute
+  '/_private/lists/new': typeof PrivateListsNewRoute
   '/_public/auth/login': typeof PublicAuthLoginRoute
   '/_public/auth/register': typeof PublicAuthRegisterRoute
+  '/_private/lists/': typeof PrivateListsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth/login' | '/auth/register'
+  fullPaths:
+    | '/'
+    | '/lists/$id'
+    | '/lists/new'
+    | '/auth/login'
+    | '/auth/register'
+    | '/lists'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth/login' | '/auth/register'
+  to:
+    | '/'
+    | '/lists/$id'
+    | '/lists/new'
+    | '/auth/login'
+    | '/auth/register'
+    | '/lists'
   id:
     | '__root__'
     | '/_private'
     | '/_public'
     | '/_private/'
+    | '/_private/lists/$id'
+    | '/_private/lists/new'
     | '/_public/auth/login'
     | '/_public/auth/register'
+    | '/_private/lists/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -99,6 +141,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PrivateIndexRouteImport
       parentRoute: typeof PrivateRoute
     }
+    '/_private/lists/': {
+      id: '/_private/lists/'
+      path: '/lists'
+      fullPath: '/lists'
+      preLoaderRoute: typeof PrivateListsIndexRouteImport
+      parentRoute: typeof PrivateRoute
+    }
     '/_public/auth/register': {
       id: '/_public/auth/register'
       path: '/auth/register'
@@ -113,15 +162,35 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PublicAuthLoginRouteImport
       parentRoute: typeof PublicRoute
     }
+    '/_private/lists/new': {
+      id: '/_private/lists/new'
+      path: '/lists/new'
+      fullPath: '/lists/new'
+      preLoaderRoute: typeof PrivateListsNewRouteImport
+      parentRoute: typeof PrivateRoute
+    }
+    '/_private/lists/$id': {
+      id: '/_private/lists/$id'
+      path: '/lists/$id'
+      fullPath: '/lists/$id'
+      preLoaderRoute: typeof PrivateListsIdRouteImport
+      parentRoute: typeof PrivateRoute
+    }
   }
 }
 
 interface PrivateRouteChildren {
   PrivateIndexRoute: typeof PrivateIndexRoute
+  PrivateListsIdRoute: typeof PrivateListsIdRoute
+  PrivateListsNewRoute: typeof PrivateListsNewRoute
+  PrivateListsIndexRoute: typeof PrivateListsIndexRoute
 }
 
 const PrivateRouteChildren: PrivateRouteChildren = {
   PrivateIndexRoute: PrivateIndexRoute,
+  PrivateListsIdRoute: PrivateListsIdRoute,
+  PrivateListsNewRoute: PrivateListsNewRoute,
+  PrivateListsIndexRoute: PrivateListsIndexRoute,
 }
 
 const PrivateRouteWithChildren =

@@ -10,7 +10,9 @@
       "@app/*": ["./src/*"],
 
       // Other packages
-      "@contract/*": ["../../packages/contract/src/*"]
+      "@contract/*": ["../../packages/contract/src/*"],
+      "@domain/*": ["../../packages/domain/src/*"],
+      "@application/*": ["../../packages/application/src/*"]
     }
   },
   "include": ["src", "panda.config.ts", "styled"],

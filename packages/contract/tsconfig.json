@@ -4,7 +4,9 @@
     "noEmit": true,
     "baseUrl": ".",
     "paths": {
-      "@contract/*": ["./src/*"]
+      "@contract/*": ["./src/*"],
+      "@domain/*": ["../domain/src/*"],
+      "@application/*": ["../application/src/*"]
     }
   },
   "include": ["src", "test"],

@@ -1,39 +1,28 @@
-import { authClient } from "@app/utils/auth-client"
-import { useAppForm } from "@app/utils/hooks/app-form"
-import { toast } from "@app/utils/toast"
+import { useAppForm } from "@app/shared/hooks/app-form"
+import { useLoginMutation } from "@app/shared/hooks/auth-hooks"
+import { loginFormSchema } from "@app/shared/schemas/auth"
 import { Card, Divider, Stack, Text, Title } from "@mantine/core"
-import { type } from "arktype"
 import AnchorLink from "../layout/AnchorLink"
-
-const formSchema = type({ email: "string.email", password: "string" })
 
 type LoginFormProps = {
   onLoginSuccess: () => Promise<void>
-  loginFn: () => Promise<void>
 }
 
 const LoginForm = ({ onLoginSuccess }: LoginFormProps) => {
+  const loginMut = useLoginMutation()
+
   const form = useAppForm({
     defaultValues: { email: "", password: "" },
-    validators: { onSubmit: formSchema },
+    validators: { onSubmit: loginFormSchema, onBlurAsync: loginFormSchema },
 
     onSubmit: async ({ value }) => {
-      const res = await authClient.signIn.email({
-        email: value.email,
-        password: value.password,
+      await loginMut.mutateAsync(value, {
+        onSuccess: async (data) => {
+          if (data.data) {
+            await onLoginSuccess()
+          }
+        },
       })
-
-      if (res.error) {
-        toast.error({
-          message: res.error.message,
-          title: res.error.statusText,
-        })
-
-        // Other onError stuff
-      } else {
-        toast.success({ message: "Login successful" })
-        await onLoginSuccess()
-      }
     },
   })
 

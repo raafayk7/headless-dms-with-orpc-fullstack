@@ -1,17 +1,12 @@
-import RegisterForm from "@app/components/auth/RegisterForm"
+import { RegisterPage } from "@app/pages/auth/register-page"
 import { createFileRoute } from "@tanstack/react-router"
-import { useCallback } from "react"
 
-const RegisterPage = () => {
+const RegisterPageWrapper = () => {
   const navigate = Route.useNavigate()
 
-  const onRegisterSuccess = useCallback(async () => {
-    navigate({ to: "/auth/login", from: Route.path })
-  }, [navigate])
-
-  return <RegisterForm onRegisterSuccess={onRegisterSuccess} />
+  return <RegisterPage navigate={navigate} redirectTo={undefined} />
 }
 
 export const Route = createFileRoute("/_public/auth/register")({
-  component: RegisterPage,
+  component: RegisterPageWrapper,
 })

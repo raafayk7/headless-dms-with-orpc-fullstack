@@ -1,12 +1,12 @@
 import DefaultErrorBoundary from "@app/components/layout/DefaultErrorBoundary"
-import NotFound from "@app/components/layout/NotFound"
+import PageNotFound from "@app/components/layout/PageNotFound"
 import { routeTree } from "@app/routeTree.gen"
-import { orpc } from "@app/utils/orpc"
-import { queryClient } from "@app/utils/query-client"
+import { orpc } from "@app/shared/orpc"
+import { queryClient } from "@app/shared/query-client"
 import { QueryClientProvider } from "@tanstack/react-query"
 import { createRouter as createTanStackRouter } from "@tanstack/react-router"
 import { routerWithQueryClient } from "@tanstack/react-router-with-query"
-import FullPageLoader from "./components/layout/PageLoader"
+import { PageSuspenseFallback } from "./components/layout/PageSuspenseFallback"
 
 const Providers = ({ children }: { children: React.ReactNode }) => {
   return (
@@ -20,8 +20,8 @@ export const createRouter = () => {
     scrollRestoration: true,
     context: { queryClient, orpc } as const,
     defaultPreload: "intent",
-    defaultPendingComponent: FullPageLoader,
-    defaultNotFoundComponent: () => <NotFound />,
+    defaultPendingComponent: PageSuspenseFallback,
+    defaultNotFoundComponent: () => <PageNotFound />,
     defaultErrorComponent: DefaultErrorBoundary,
     Wrap: Providers,
   })

@@ -1,15 +1,20 @@
 {
   "name": "@repo/typescript-config",
   "version": "0.0.0",
-  "packageManager": "bun@1.2.16",
+  "packageManager": "bun@1.2.19",
   "description": "Shared TypeScript configuration for the project",
   "private": true,
   "license": "MIT",
+  "scripts": {
+    "lint": "echo ok",
+    "check-types": "echo ok",
+    "test": "echo ok"
+  },
   "publishConfig": {
     "access": "public"
   },
   "devDependencies": {
     "@tsconfig/bun": "^1.0.8",
-    "@tsconfig/vite-react": "^6.3.5"
+    "@tsconfig/vite-react": "^7.0.0"
   }
 }

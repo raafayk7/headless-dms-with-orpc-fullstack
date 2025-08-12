@@ -1,39 +1,28 @@
-import { authClient } from "@app/utils/auth-client"
-import { setOnSubmitErrorMap } from "@app/utils/form"
-import { useAppForm } from "@app/utils/hooks/app-form"
-import { toast } from "@app/utils/toast"
+import { useAppForm } from "@app/shared/hooks/app-form"
+import { useRegisterMutation } from "@app/shared/hooks/auth-hooks"
+import { registerFormSchema } from "@app/shared/schemas/auth"
 import { Card, Divider, Stack, Text, Title } from "@mantine/core"
-import { type } from "arktype"
 import AnchorLink from "../layout/AnchorLink"
-
-// const formSchema = NewUserSchema
-const formSchema = type({
-  name: "string >= 1",
-  email: "string.email",
-  password: "string >= 3",
-})
 
 type RegisterFormProps = {
   onRegisterSuccess: () => Promise<void>
 }
 
 const RegisterForm = ({ onRegisterSuccess }: RegisterFormProps) => {
+  const registerMut = useRegisterMutation()
+
   const form = useAppForm({
     defaultValues: { name: "", email: "", password: "" },
-    validators: { onSubmit: formSchema },
-    onSubmit: async ({ value, formApi }) => {
-      const res = await authClient.signUp.email({ ...value })
+    validators: { onSubmit: registerFormSchema },
 
-      if (res.error) {
-        toast.error({
-          message: res.error.message,
-          title: res.error.code,
-        })
-        setOnSubmitErrorMap(res.error, formApi)
-      } else {
-        toast.success({ message: "Registration successful" })
-        await onRegisterSuccess()
-      }
+    onSubmit: async ({ value }) => {
+      await registerMut.mutateAsync(value, {
+        onSuccess: async (data) => {
+          if (data.data) {
+            await onRegisterSuccess()
+          }
+        },
+      })
     },
   })
   const authPending = form.state.isSubmitting

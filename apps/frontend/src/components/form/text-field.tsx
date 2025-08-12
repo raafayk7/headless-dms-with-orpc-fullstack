@@ -1,21 +1,12 @@
-import { useFieldContext } from "@app/utils/contexts/form-context"
-import { TextInput } from "@mantine/core"
-import type { HTMLInputTypeAttribute } from "react"
+import { useFieldContext } from "@app/shared/contexts/form-context"
+import { TextInput, type TextInputProps } from "@mantine/core"
 
-export interface TextFieldProps {
-  label: string
-  placeholder?: string
-  type?: HTMLInputTypeAttribute
-  required?: boolean
-  disabled?: boolean
-}
+export interface TextFieldProps extends TextInputProps {}
 
 const TextField = ({
-  label,
-  placeholder,
-  type,
-  required,
-  disabled,
+  radius = "md",
+  labelProps = {},
+  ...rest
 }: TextFieldProps) => {
   const field = useFieldContext<string>()
   const isInvalid = !field.state.meta.isValid
@@ -25,18 +16,15 @@ const TextField = ({
     <TextInput
       aria-errormessage={errMsg}
       aria-invalid={isInvalid}
-      disabled={disabled}
       error={errMsg}
-      label={label}
-      labelProps={{ mb: "xs" }}
+      labelProps={{ mb: "xs", ...labelProps }}
       name={field.name}
       onBlur={field.handleBlur}
       onChange={(e) => field.handleChange(e.target.value)}
-      placeholder={placeholder}
-      radius="md"
-      required={required}
-      type={type}
+      radius={radius}
       value={field.state.value}
+      withErrorStyles={true}
+      {...rest}
     />
   )
 }

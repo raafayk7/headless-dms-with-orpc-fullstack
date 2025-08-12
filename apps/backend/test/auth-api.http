@@ -1,4 +1,4 @@
-@baseUrl = http://localhost:8000/rpc
+@baseUrl = http://localhost:8000
 
 
 ### Signup
@@ -7,25 +7,27 @@ POST {{baseUrl}}/public/auth/signup HTTP/1.1
 Content-Type: application/json
 
 {
-  "json": {
-    "name": "Test User",
-    "email": "test@dev.com",
-    "password": "passwords"
-  }
+ "json": {
+ "name": "Test User",
+ "email": "test@dev.com",
+ "password": "passwords"
+ }
 }
+
 
 ### Login
 
 # @name login
-POST {{baseUrl}}/public/auth/signin HTTP/1.1
+
+POST {{baseUrl}}/auth/sign-in/email HTTP/1.1
 Content-Type: application/json
+Origin: http://localhost:3000
 
 {
-  "json": {
-    "email": "test@dev.com",
-    "password": "passwords"
-  }
+ "email": "test@dev.com",
+ "password": "testpass"
 }
+
 
 ### Get Current User
 
@@ -34,5 +36,5 @@ Authorization: Bearer {{login.response.body.$.json.token}}
 Content-Type: application/json
 
 {
-  "json": {}
+ "json": {}
 }

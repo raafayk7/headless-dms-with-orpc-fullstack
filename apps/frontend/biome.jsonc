@@ -14,7 +14,9 @@
     ]
   },
   "linter": {
-    "domains": { "react": "recommended" }
+    "domains": {
+      "react": "recommended"
+    }
   },
   "javascript": {
     "jsxRuntime": "transparent",

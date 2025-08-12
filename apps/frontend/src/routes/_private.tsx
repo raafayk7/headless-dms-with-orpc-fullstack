@@ -1,70 +1,15 @@
-import LogoutBtn from "@app/components/auth/LogoutBtn"
-import AnchorLink from "@app/components/layout/AnchorLink"
-import { AppShell, Box, Group, Stack, Text } from "@mantine/core"
-import {
-  createFileRoute,
-  Outlet,
-  redirect,
-  useRouter,
-} from "@tanstack/react-router"
-import { useCallback } from "react"
-
-const PrivateLayout = () => {
-  const router = useRouter()
-  const navigate = Route.useNavigate()
-
-  // test: Do we need the useCallback here?
-  const handleLogout = useCallback(async () => {
-    router.invalidate().finally(() => {
-      navigate({ to: "/auth/login" })
-    })
-  }, [navigate, router])
-
-  return (
-    <AppShell navbar={{ width: 300, breakpoint: "sm" }}>
-      <AppShell.Navbar p="md">
-        <Stack dir="column" gap="md">
-          <Box>
-            <Group
-              mb="md"
-              pb="md"
-              style={{
-                borderBottom: "1px solid var(--mantine-color-dark-4)",
-              }}
-            >
-              <AnchorLink to="/">
-                <Text fw="bold" ta="center" variant="text">
-                  App
-                </Text>
-              </AnchorLink>
-            </Group>
-
-            <Stack gap="sm"></Stack>
-          </Box>
-
-          <Box
-            mt="md"
-            pt="md"
-            style={{ borderTop: "1px solid var(--mantine-color-dark-4)" }}
-          >
-            <LogoutBtn onLogoutSuccess={handleLogout} />
-          </Box>
-        </Stack>
-      </AppShell.Navbar>
-      <AppShell.Main>
-        <Outlet />
-      </AppShell.Main>
-    </AppShell>
-  )
-}
+import { PrivatePageLayout } from "@app/pages/layouts/private"
+import { createFileRoute, redirect } from "@tanstack/react-router"
 
 // https://tanstack.com/router/v1/docs/framework/react/guide/authenticated-routes#redirecting
 export const Route = createFileRoute("/_private")({
-  component: PrivateLayout,
+  component: PrivatePageLayout,
   beforeLoad: ({ context, location }) => {
     if (!context.user) {
-      console.warn("User not authenticated, redirecting to login")
-      throw redirect({ to: "/auth/login", search: { redirect: location.href } })
+      throw redirect({
+        to: "/auth/login",
+        search: { redirect: location.href },
+      })
     }
 
     return { user: context.user } // to make user non-null

@@ -2,12 +2,13 @@
   "$schema": "https://json.schemastore.org/package.json",
   "name": "ct-starter",
   "private": true,
-  "packageManager": "bun@1.2.16",
+  "packageManager": "bun@1.2.19",
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
     "lint": "turbo run lint",
-    "check-types": "turbo run check-types"
+    "check-types": "turbo run check-types",
+    "test": "turbo run test"
   },
   "devDependencies": {
     "@biomejs/biome": "catalog:",
@@ -16,23 +17,26 @@
     "oxlint": "catalog:",
     "prettier": "catalog:",
     "taze": "catalog:",
-    "turbo": "^2.5.4",
+    "turbo": "^2.5.5",
     "typescript": "catalog:"
   },
   "engines": {
-    "bun": ">=1.2.15"
+    "bun": ">=1.2.16"
   },
   "workspaces": {
     "packages": ["packages/*", "apps/*"],
     "catalog": {
       "typescript": "^5.8.3",
       "@types/bun": "^1.2.15",
-      "@biomejs/biome": "2.0.0-beta.6",
+      "@biomejs/biome": "2",
+      "@carbonteq/fp": "^0.8.2",
       "prettier": "^3.5.3",
-      "@orpc/contract": "^1.2.0",
-      "@orpc/server": "^1.4.4",
-      "@orpc/zod": "^1.2.0",
+      "@orpc/contract": "^1.6.0",
+      "@orpc/server": "^1.6.0",
+      "@orpc/zod": "^1.3.0",
       "oxlint": "^1.1.0",
+      "effect": "^3.16.12",
+      "tsyringe": "^4.10.0",
       "zod": "^3.25.0",
       "taze": "^19.1.0",
       "better-auth": "^1.2.7",

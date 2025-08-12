@@ -2,11 +2,16 @@
   "name": "@repo/contract",
   "version": "1.0.0",
   "description": "Contracts and schemas for the project",
-  "packageManager": "bun@1.2.16",
+  "packageManager": "bun@1.2.19",
   "keywords": [],
   "author": "",
   "license": "ISC",
   "files": ["src"],
+  "scripts": {
+    "lint": "biome check",
+    "check-types": "tsgo --noEmit --pretty",
+    "test": "echo ok"
+  },
   "exports": {
     ".": {
       "import": "./src/index.ts",
@@ -27,6 +32,7 @@
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
     "@types/bun": "catalog:",
+    "@types/json-schema": "^7.0.15",
     "@typescript/native-preview": "catalog:",
     "oxlint": "catalog:",
     "typescript": "catalog:"
@@ -34,6 +40,7 @@
   "dependencies": {
     "@orpc/contract": "catalog:",
     "@orpc/zod": "catalog:",
+    "effect": "catalog:",
     "zod": "catalog:"
   }
 }

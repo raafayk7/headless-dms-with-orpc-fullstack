@@ -1,29 +1,45 @@
-import { authClient } from "@app/utils/auth-client"
-import { toast } from "@app/utils/toast"
+import { useLogoutMutation } from "@app/shared/hooks/auth-hooks"
+import { toast } from "@app/shared/toast"
 import { Button } from "@mantine/core"
+import { useNavigate, useRouter } from "@tanstack/react-router"
 import { LogOutIcon } from "lucide-react"
 import { memo, useState } from "react"
 
-type LogoutBtnProps = {
-  onLogoutSuccess: () => Promise<void>
-}
+// type LogoutBtnProps = {
+//   onLogoutSuccess: () => Promise<void>
+// }
 
-const LogoutBtn = ({ onLogoutSuccess }: LogoutBtnProps) => {
+const LogoutBtn = () => {
   const [loggingOut, setLoggingOut] = useState(false)
+  const logoutMut = useLogoutMutation()
+  const router = useRouter()
+  const navigate = useNavigate()
+
+  const onLogoutSuccess = async () => {
+    await router.invalidate()
+
+    navigate({ to: "/auth/login", replace: true })
+  }
 
   const handleClick = async () => {
     setLoggingOut(true)
-    const signOutRes = await authClient.signOut()
-    setLoggingOut(false)
 
-    if (signOutRes.error) {
-      toast.error({
-        title: "Failed to logout",
-        message: signOutRes.error.message,
-      })
-    } else {
-      await onLogoutSuccess()
-    }
+    await logoutMut.mutateAsync(undefined, {
+      onError: (err) => {
+        toast.error({
+          title: "Logout failed",
+          message: err.message,
+        })
+      },
+      onSuccess: async (res) => {
+        if (res.data?.success) {
+          await onLogoutSuccess()
+        }
+      },
+      onSettled: () => {
+        setLoggingOut(false)
+      },
+    })
   }
 
   return (

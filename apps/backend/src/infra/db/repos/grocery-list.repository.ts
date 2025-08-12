@@ -1,0 +1,243 @@
+import { Result as R } from "@carbonteq/fp"
+import type {
+  GroceryListEntity,
+  GroceryListType,
+} from "@domain/grocery-list/grocery-list.entity"
+import { GroceryListEntity as GList } from "@domain/grocery-list/grocery-list.entity"
+import { GroceryListNotFoundError } from "@domain/grocery-list/grocery-list.errors"
+import {
+  type GroceryListFindFilters,
+  GroceryListRepository,
+} from "@domain/grocery-list/grocery-list.repository"
+import type { ItemEntity } from "@domain/grocery-list-item"
+import type { UserType } from "@domain/user/user.entity"
+import { FpUtils, type RepoResult, type RepoUnitResult } from "@domain/utils"
+import {
+  type Paginated,
+  type PaginationParams,
+  PaginationUtils,
+} from "@domain/utils/pagination.utils"
+import { buildFilterConditions } from "@infra/db/db.utils"
+import { and, asc, desc, eq, gte, ilike } from "drizzle-orm"
+import { injectable } from "tsyringe"
+import type { AppDatabase } from "../conn"
+import { InjectDb } from "../conn"
+import { groceryListItems, groceryLists } from "../schema"
+import { enhanceEntityMapper } from "./repo.utils"
+
+const mapper = enhanceEntityMapper((row: typeof groceryLists.$inferSelect) =>
+  GList.fromEncoded({
+    id: row.id,
+    name: row.name,
+    description: row.description,
+    ownerId: row.userId,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+    active: row.isActive,
+  }),
+)
+
+@injectable()
+export class DrizzleGroceryListRepository extends GroceryListRepository {
+  constructor(@InjectDb() private readonly db: AppDatabase) {
+    super()
+  }
+
+  async create(
+    list: GroceryListEntity,
+    items: ItemEntity[],
+  ): Promise<RepoResult<GroceryListEntity>> {
+    const encoded = FpUtils.serialized(list).flatZip(() => {
+      const itemsEncoded = items.map(FpUtils.serializedPreserveId)
+
+      return FpUtils.collectValidationErrors(itemsEncoded)
+    })
+
+    const res = await encoded
+      .map(async ([listData, itemsData]) => {
+        await this.db.transaction(async (tx) => {
+          await tx.insert(groceryLists).values({
+            ...listData,
+            id: list.id,
+            userId: list.ownerId,
+          })
+
+          if (itemsData.length > 0)
+            await tx.insert(groceryListItems).values(
+              itemsData.map((itemEncoded) => ({
+                ...itemEncoded,
+                id: itemEncoded.id,
+                listId: list.id,
+                createdBy: list.ownerId,
+              })),
+            )
+        })
+
+        return list
+      })
+      .toPromise()
+
+    return res
+  }
+
+  async findById(
+    id: GroceryListType["id"],
+  ): Promise<RepoResult<GroceryListEntity, GroceryListNotFoundError>> {
+    try {
+      const row = await this.db.query.groceryLists.findFirst({
+        where: eq(groceryLists.id, id),
+      })
+
+      if (!row) {
+        return R.Err(new GroceryListNotFoundError(id))
+      }
+
+      return mapper.mapOne(row)
+    } catch {
+      return R.Err(new GroceryListNotFoundError(id))
+    }
+  }
+
+  async update(
+    list: GroceryListEntity,
+  ): Promise<RepoResult<GroceryListEntity, GroceryListNotFoundError>> {
+    const r = await list
+      .updateData()
+      .map(
+        async (updateData) =>
+          await this.db
+            .update(groceryLists)
+            .set(updateData)
+            .where(eq(groceryLists.id, list.id))
+            .returning(),
+      )
+      .flatMap((updatedEntityData) => {
+        const data = updatedEntityData[0]
+        if (!data) return R.Err(new GroceryListNotFoundError(list.id))
+
+        return mapper.mapOne(data)
+      })
+      .toPromise()
+
+    return r
+  }
+
+  async delete(
+    id: GroceryListType["id"],
+  ): Promise<RepoUnitResult<GroceryListNotFoundError>> {
+    const res = await this.db.transaction(async (tx) => {
+      await tx.delete(groceryListItems).where(eq(groceryListItems.listId, id))
+      return await tx
+        .delete(groceryLists)
+        .where(eq(groceryLists.id, id))
+        .returning({ id: groceryLists.id })
+    })
+
+    if (res.length === 0) {
+      return R.Err(new GroceryListNotFoundError(id))
+    }
+
+    return R.UNIT_RESULT
+  }
+
+  async findByUserId(
+    userId: UserType["id"],
+  ): Promise<RepoResult<GroceryListEntity[]>> {
+    const rows = await this.db
+      .select()
+      .from(groceryLists)
+      .where(eq(groceryLists.userId, userId))
+      .orderBy(desc(groceryLists.updatedAt))
+
+    return mapper.mapMany(rows)
+  }
+
+  async findWithFilters(
+    filters: GroceryListFindFilters,
+    paginationParams: PaginationParams,
+  ): Promise<RepoResult<Paginated<GroceryListEntity>>> {
+    const pagination = PaginationUtils.getDefaultPagination({
+      page: paginationParams.page,
+      limit: paginationParams.limit,
+      sortOrder: paginationParams.sortOrder,
+    })
+
+    const offset = PaginationUtils.calculateOffset(
+      pagination.page,
+      pagination.limit,
+    )
+
+    const where = DrizzleGroceryListRepository.buildFindFilters(filters)
+
+    const orderBy =
+      paginationParams.sortBy === "name"
+        ? pagination.sortOrder === "asc"
+          ? asc(groceryLists.name)
+          : desc(groceryLists.name)
+        : pagination.sortOrder === "asc"
+          ? asc(groceryLists.updatedAt)
+          : desc(groceryLists.updatedAt)
+
+    const totalCount = await this.db.$count(groceryLists, where)
+
+    const rows = await this.db
+      .select()
+      .from(groceryLists)
+      .where(where)
+      .orderBy(orderBy)
+      .limit(pagination.limit)
+      .offset(offset)
+
+    const listsResult = mapper.mapMany(rows)
+
+    return listsResult.map((lists) =>
+      PaginationUtils.createPaginatedResult(
+        lists,
+        totalCount,
+        pagination.page,
+        pagination.limit,
+      ),
+    )
+  }
+
+  async count(filters: GroceryListFindFilters): Promise<number> {
+    const conditions = DrizzleGroceryListRepository.buildFindFilters(filters)
+
+    const c = await this.db.$count(groceryLists, conditions)
+
+    return c
+  }
+
+  private static buildFindFilters(filters: GroceryListFindFilters) {
+    const conditions = buildFilterConditions(filters, {
+      userId: (id) => eq(groceryLists.userId, id),
+      search: (search) => ilike(groceryLists.name, `%${search}%`),
+      status: (s) =>
+        s === "active"
+          ? eq(groceryLists.isActive, true)
+          : s === "inactive"
+            ? eq(groceryLists.isActive, false)
+            : undefined,
+      since: (d) => gte(groceryLists.updatedAt, d),
+    })
+
+    // const conditions = []
+    // if (filters.userId) {
+    //   conditions.push(eq(groceryLists.userId, filters.userId))
+    // }
+    //
+    // if (filters.search) {
+    //   conditions.push(ilike(groceryLists.name, `%${filters.search}%`))
+    // }
+    // if (filters.status === "active") {
+    //   conditions.push(eq(groceryLists.isActive, true))
+    // } else if (filters.status === "inactive") {
+    //   conditions.push(eq(groceryLists.isActive, false))
+    // }
+    // if (filters.since) {
+    //   conditions.push(gte(groceryLists.updatedAt, filters.since))
+    // }
+
+    return conditions.length > 0 ? and(...conditions) : undefined
+  }
+}

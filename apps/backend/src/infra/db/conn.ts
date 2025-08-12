@@ -12,7 +12,10 @@ import config from "@/infra/config"
 import * as schema from "./schema"
 
 export const createDbInstance = () => {
-  const client = new SQL(config.db.DB_URL, { max: 25 })
+  const client = new SQL(config.db.DB_URL, {
+    max: 25, // Reduced from 25 to avoid connection limit issues
+    idleTimeout: 60, // Close idle connections after 60 seconds
+  })
 
   const db = drizzle({
     client,

@@ -8,13 +8,11 @@
       "@/*": ["src/*"],
       "@infra": ["src/infra"],
       "@infra/*": ["src/infra/*"],
-      "@application": ["src/application"],
-      "@application/*": ["src/application/*"],
       "@web/*": ["src/web/*"],
-
       // Other packages
       "@contract/*": ["../../packages/contract/src/*"],
-      "@domain/*": ["../../packages/domain/src/*"]
+      "@domain/*": ["../../packages/domain/src/*"],
+      "@application/*": ["../../packages/application/src/*"]
     }
   },
   "include": ["src", "./*.ts"],

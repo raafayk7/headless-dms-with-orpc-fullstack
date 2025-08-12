@@ -4,6 +4,5 @@ import { resolveAuthFromContainer } from "./better-auth"
 import { container } from "tsyringe"
 
 export const auth = resolveAuthFromContainer(container)
-console.debug(`Auth instance created "${auth.options.appName}"`)
 
 export default auth

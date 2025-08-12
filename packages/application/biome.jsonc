@@ -1,0 +1,15 @@
+{
+  "$schema": "../../node_modules/@biomejs/biome/configuration_schema.json",
+  "root": false,
+  "files": {
+    "includes": [
+      "src/**/*.ts",
+      "test/**/*.ts",
+      "./*.ts",
+      "package.json",
+      "tsconfig.json",
+      ".oxlintrc.json"
+    ]
+  },
+  "extends": "//"
+}

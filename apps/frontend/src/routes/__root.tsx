@@ -1,11 +1,11 @@
 /// <reference types="vite/client" />
 
 import DefaultErrorBoundary from "@app/components/layout/DefaultErrorBoundary"
-import NotFound from "@app/components/layout/NotFound"
-import FullPageLoader from "@app/components/layout/PageLoader"
-import { getAuthSession } from "@app/utils/auth-client"
-import type { OrpcReactQuery } from "@app/utils/orpc"
-import { seo } from "@app/utils/seo"
+import PageNotFound from "@app/components/layout/PageNotFound"
+import { PageSuspenseFallback } from "@app/components/layout/PageSuspenseFallback"
+import { prefetchAuthSession } from "@app/shared/hooks/auth-hooks"
+import type { OrpcReactQuery } from "@app/shared/orpc"
+import { seo } from "@app/shared/seo"
 import {
   ColorSchemeScript,
   MantineProvider,
@@ -44,19 +44,12 @@ const RootDocument = ({ children }: { children: React.ReactNode }) => {
           {children}
           <Notifications />
         </MantineProvider>
-        {import.meta.env.DEV ? (
-          <>
-            <ReactQueryDevtools
-              buttonPosition="bottom-right"
-              initialIsOpen={false}
-              position="bottom"
-            />
-            <TanStackRouterDevtools
-              initialIsOpen={false}
-              position="bottom-left"
-            />
-          </>
-        ) : null}
+        <ReactQueryDevtools
+          buttonPosition="bottom-right"
+          initialIsOpen={false}
+          position="bottom"
+        />
+        <TanStackRouterDevtools initialIsOpen={false} position="top-right" />
         <Scripts />
         <ColorSchemeScript defaultColorScheme="dark" />
       </body>
@@ -67,7 +60,7 @@ const RootDocument = ({ children }: { children: React.ReactNode }) => {
 const RootComponent = () => {
   return (
     <RootDocument>
-      <Suspense fallback={<FullPageLoader />}>
+      <Suspense fallback={<PageSuspenseFallback />}>
         <Outlet />
       </Suspense>
     </RootDocument>
@@ -76,17 +69,17 @@ const RootComponent = () => {
 
 export const Route = createRootRouteWithContext<RouterAppContext>()({
   component: RootComponent,
-  notFoundComponent: () => <NotFound />,
+  notFoundComponent: () => <PageNotFound />,
   errorComponent: (props) => (
     <RootDocument>
       <DefaultErrorBoundary {...props} />
     </RootDocument>
   ),
-  beforeLoad: async () => {
+  beforeLoad: async ({ context }) => {
     // This function will execute before every page load, and on a page transition with SSR.
-    // However, better-auth is using the current cookies to prevent an unnecessary request to the backend
-    const res = await getAuthSession()
-    const user = res.session?.user || null
+    // Using React Query cache to reduce session calls, change staleTime if required
+    const res = await prefetchAuthSession(context.queryClient)
+    const user = res?.user || null
 
     return { user }
   },
