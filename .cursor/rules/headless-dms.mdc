@@ -1,0 +1,280 @@
+---
+alwaysApply: true
+---
+
+## Ground Rules
+
+1. **No Code Without Permission**: The assistant never produced code without explicit user approval
+2. **Always Confirm Before Action**: Every major change was confirmed with the user before implementation
+3. **No New Functionality to Existing Methods**: The refactoring focused purely on architectural changes, not feature additions
+4. **No Functionality Removal for Existing Methods**: Existing functionality was preserved, only restructured
+5. **No Enhancements to Existing Methods**: The goal was straightforward refactoring, not "fancification"
+6. **Incremental Progress**: Each step was completed and verified before moving to the next
+7. **"Simple & Essential" Protocol**: Focus on core business logic and essential methods, avoid over-engineering
+8. **Use existing utils from orpc-fullstack library**: The library serves as template/boilerplate upon which the project will be built upon. 
+9. **Comprehensive testing**: test all layers/methods using orpc-fullstack patterns/utilties
+10. **OpenAPI documentation**: Generate interactive and thorough OpenAPI documentation for end to end workflow
+11. **Using WSL**: The project is being developed on a Windows system. WSL is being used as to avoid any compatibility issues
+
+
+
+
+## Objective
+
+Create a backend (headless) Document Management System 
+
+
+This particular project is **Rewrite #2**. Throughout the progress old code from previous iterations of this project will either be referred to as **legacy** (original project) or **Rewrite #1** (1st rewrite)
+
+
+This particular rewrite of the code is aimed to use the orpc-fullstack repo as the template for project development, as it set to be company standard moving on. Hence using the utilities it provides and the patterns it uses is essential
+
+The structure of the orpc-fullstack repo before the start of the project is this
+
+```
+packages/
+├── application/
+│   ├── biome.jsonc
+│   ├── package.json
+│   ├── README.md
+│   ├── src/
+│   │   ├── dtos/
+│   │   │   └── grocery-list.dto.ts
+│   │   ├── index.ts
+│   │   ├── schemas/
+│   │   │   └── dashboard.ts
+│   │   ├── services/
+│   │   │   └── index.ts
+│   │   ├── utils/
+│   │   │   ├── application-result.utils.ts
+│   │   │   ├── pagination.utils.ts
+│   │   │   └── validation.utils.ts
+│   │   └── workflows/
+│   │       ├── grocery-list.workflow.ts
+│   │       └── index.ts
+│   ├── test/
+│   │   ├── application-result.test.ts
+│   │   ├── pagination.test.ts
+│   │   └── validation.test.ts
+│   └── tsconfig.json
+├── contract/
+│   ├── biome.jsonc
+│   ├── package.json
+│   ├── src/
+│   │   ├── contracts/
+│   │   │   ├── grocery-list.ts
+│   │   │   ├── index.ts
+│   │   │   └── user.ts
+│   │   ├── index.ts
+│   │   ├── schemas/
+│   │   │   ├── index.ts
+│   │   │   └── user.ts
+│   │   └── utils/
+│   │       └── oc.base.ts
+│   └── tsconfig.json
+├── domain/
+│   ├── biome.jsonc
+│   ├── package.json
+│   ├── src/
+│   │   ├── grocery-list/
+│   │   │   ├── grocery-list.entity.ts
+│   │   │   ├── grocery-list.errors.ts
+│   │   │   ├── grocery-list.repository.ts
+│   │   │   ├── grocery-list.schemas.ts
+│   │   │   ├── grocery-list.service.ts
+│   │   │   └── index.ts
+│   │   ├── grocery-list-item/
+│   │   │   ├── index.ts
+│   │   │   ├── item.entity.ts
+│   │   │   ├── item.errors.ts
+│   │   │   ├── item.repository.ts
+│   │   │   └── item.service.ts
+│   │   ├── index.ts
+│   │   ├── invite/
+│   │   │   ├── index.ts
+│   │   │   ├── invite.entity.ts
+│   │   │   ├── invite.errors.ts
+│   │   │   ├── invite.repository.ts
+│   │   │   └── invite.service.ts
+│   │   ├── user/
+│   │   │   ├── index.ts
+│   │   │   ├── user.entity.ts
+│   │   │   ├── user.errors.ts
+│   │   │   └── user.repository.ts
+│   │   └── utils/
+│   │       ├── base.entity.ts
+│   │       ├── base.errors.ts
+│   │       ├── compose.utils.ts
+│   │       ├── fp-utils.ts
+│   │       ├── index.ts
+│   │       ├── pagination.utils.ts
+│   │       ├── refined-types.ts
+│   │       ├── schema-utils.ts
+│   │       └── validation.utils.ts
+│   ├── test/
+│   │   ├── compose-utils.test.ts
+│   │   ├── fp-utils.test.ts
+│   │   ├── parse-error-parse.test.ts
+│   │   └── validation-error.test.ts
+│   ├── test.ts
+│   └── tsconfig.json
+└── typescript-config/
+    ├── bun.json
+    ├── package.json
+    ├── react.json
+    └── tsconfig.json
+
+apps/backend/
+├── biome.jsonc
+├── drizzle.config.ts
+├── migrations/
+│   ├── 0000_init.sql
+│   ├── 0001_items_repo_columns.sql
+│   └── meta/
+│       ├── _journal.json
+│       ├── 0000_snapshot.json
+│       └── 0001_snapshot.json
+├── mise.toml
+├── package.json
+├── src/
+│   ├── constants.ts
+│   ├── infra/
+│   │   ├── auth/
+│   │   │   ├── auth.service.ts
+│   │   │   ├── better-auth-instance.ts
+│   │   │   ├── better-auth.ts
+│   │   │   └── create-instance.ts
+│   │   ├── config/
+│   │   │   ├── app.config.ts
+│   │   │   ├── auth.config.ts
+│   │   │   ├── db.config.ts
+│   │   │   └── index.ts
+│   │   ├── db/
+│   │   │   ├── conn.ts
+│   │   │   ├── db.utils.ts
+│   │   │   ├── models/
+│   │   │   │   ├── auth.model.ts
+│   │   │   │   └── grocery-list.model.ts
+│   │   │   └── repos/
+│   │   │       ├── di.ts
+│   │   │       ├── grocery-list.repository.ts
+│   │   │       ├── item.repository.ts
+│   │   │       └── repo.utils.ts
+│   │   └── di/
+│   │       ├── index.ts
+│   │       └── utils.ts
+│   ├── scripts/
+│   │   ├── README.md
+│   │   └── seed.ts
+│   ├── web/
+│   │   ├── router/
+│   │   │   ├── auth.ts
+│   │   │   ├── grocery-list.ts
+│   │   │   ├── index.ts
+│   │   │   └── user.ts
+│   │   ├── server.ts
+│   │   ├── types.ts
+│   │   └── utils/
+│   │       ├── __tests__/
+│   │       │   └── effect-schema-converter/
+│   │       │       ├── array-types.test.ts
+│   │       │       ├── complex-schemas.test.ts
+│   │       │       ├── datetime-union.test.ts
+│   │       │       ├── error-handling.test.ts
+│   │       │       ├── object-types.test.ts
+│   │       │       ├── primitive-types.test.ts
+│   │       │       ├── union-deduplication.test.ts
+│   │       │       └── union-types.test.ts
+│   │       ├── effect-schema-converter.test.ts
+│   │       ├── auth-context.ts
+│   │       ├── common-plugins.ts
+│   │       ├── effect-schema-converter.ts
+│   │       ├── interceptors.ts
+│   │       ├── openapi.handler.ts
+│   │       ├── openapidocs.handler.ts
+│   │       ├── orpc.ts
+│   │       ├── result-handler.ts
+│   │       └── rpc.handler.ts
+│   ├── static/
+│   │   └── scalar.html
+│   ├── test/
+│   │   ├── auth-api.http
+│   │   └── auth-rpc.http
+│   ├── test.ts
+│   └── validation-test.ts
+├── tsconfig.json
+└── vite.config.ts
+```
+
+Read .cursor/rules/basic.mdc to understand the rules used to make orpc-fullstack repo
+
+## How we'll go about it
+I will provide code from Legacy or Rewrite 1 and we will discuss how to refactor it to the orpc structure/patterns/utilites before implementing it
+
+
+
+## Action Plan (Essential)
+Step by Step progress will be documented throughly but for now the overarching map of how things will be approached is this
+
+
+### Domain
+
+1. Entities: 2 Entities Document and User
+    i. User has email, password and role (all value objects in Rewrite 1)
+    ii. Document has name, path, size, mimetype, tags and metadata (all value objects in Rewrite 1)
+
+2. Value Objects: Mentioned above (may remove some to store properties directly in effect schemas)
+
+3. Guards: Guards protecting entities (currently seperate file in rewrite 1)
+
+4. Errors: Entity specific errors (not in Rewrite 1)
+
+5. Repository interface: Specific repo interfaces for each entity
+
+
+### Database
+
+Drizzle Implementation of each repo interface
+
+### Auth
+
+Auth Strategy: Access token upon login to access other routes + download token to download documents
+
+### Drizzle migration
+
+1. Define schemas for user and document
+
+2. Connect to postgres SQL database and generate and migrate
+
+
+### Resilience
+
+Add circuit breaker and retry mechanism
+
+
+### Storage
+
+1. Storage Strategy method to store files
+2. Need to have Local Storage Strategy as well as **at least 1** 3rd party storage strategy using emulators (LocalStack or Azurite)
+
+
+### DI
+Will put all relevant dependencies in container file
+
+### Application Layer
+
+**Legacy Structure**: Services containing all methods, use cases calling upon service methods, specific use case request and response DTOs
+
+Will now try to see how orpc-fullstack organizes this structure and fit our logic accordingly
+
+### HTTP
+
+Create proper route handlers that handle each request by calling upon the proper use case
+
+**Key Difference** orpc-fullstack uses Hono, legacy code was using fastify
+
+## Bootstrap + Config + App
+
+1. Create config file to load variables
+2. Create bootstrap file
+3. Create single entry point app.ts file
