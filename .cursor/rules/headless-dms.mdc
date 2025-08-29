@@ -2,6 +2,10 @@
 alwaysApply: true
 ---
 
+## Intro
+
+I am a beginner backend software engineer doing my training project called Headless-DMS
+
 ## Ground Rules
 
 1. **No Code Without Permission**: The assistant never produced code without explicit user approval
@@ -13,7 +17,7 @@ alwaysApply: true
 7. **"Simple & Essential" Protocol**: Focus on core business logic and essential methods, avoid over-engineering
 8. **Use existing utils from orpc-fullstack library**: The library serves as template/boilerplate upon which the project will be built upon. 
 9. **Comprehensive testing**: test all layers/methods using orpc-fullstack patterns/utilties
-10. **OpenAPI documentation**: Generate interactive and thorough OpenAPI documentation for end to end workflow
+10. **OpenAPI documentation**: Generate interactive and thorough OpenAPI documentation for end to end workflow. orpc-fullstack has utilities to auto-generate
 11. **Using WSL**: The project is being developed on a Windows system. WSL is being used as to avoid any compatibility issues
 
 

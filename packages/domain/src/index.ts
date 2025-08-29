@@ -4,3 +4,7 @@ export * from "./utils/base.errors"
 export { FpUtils as ResultUtils } from "./utils/fp-utils"
 export * from "./utils/refined-types"
 export * from "./utils/schema-utils"
+
+// Domain entities
+export * from "./user"
+export * from "./document"
