@@ -1,6 +1,6 @@
 import type { Result } from "@carbonteq/fp"
 import type { GroceryListEntity } from "@domain/grocery-list/grocery-list.entity"
-import type { UserEntity } from "@domain/user/user.entity"
+import type { UserEntity } from "@domain/user-orpc/user.entity"
 import { FpUtils, ValidationError } from "@domain/utils"
 import { DateTime as DT } from "effect"
 import { ItemEntity, type ItemUpdateData } from "./item.entity"

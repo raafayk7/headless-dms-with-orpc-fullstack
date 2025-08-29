@@ -1,5 +1,5 @@
 import type { ItemEntity } from "@domain/grocery-list-item"
-import type { UserType } from "@domain/user/user.entity"
+import type { UserType } from "@domain/user-orpc/user.entity"
 import type { RepoResult, RepoUnitResult } from "@domain/utils"
 import type {
   Paginated,

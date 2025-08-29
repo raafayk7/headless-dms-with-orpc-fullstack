@@ -1,6 +1,6 @@
 import type { Result } from "@carbonteq/fp"
 import { Result as R } from "@carbonteq/fp"
-import { UserEntity, UserSchema, type UserType } from "@domain/user/user.entity"
+import { UserEntity, UserSchema, type UserType } from "@domain/user-orpc/user.entity"
 import { BaseEntity, defineEntityStruct } from "@domain/utils/base.entity"
 import { FpUtils } from "@domain/utils/fp-utils"
 import { createEncoderDecoderBridge } from "@domain/utils/schema-utils"

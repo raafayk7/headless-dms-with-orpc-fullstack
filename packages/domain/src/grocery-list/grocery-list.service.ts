@@ -1,6 +1,6 @@
 import { Result } from "@carbonteq/fp"
 import { ItemEntity } from "@domain/grocery-list-item/item.entity"
-import { type UserEntity } from "@domain/user/user.entity"
+import { type UserEntity } from "@domain/user-orpc/user.entity"
 import type { ValidationError } from "@domain/utils"
 import { ComposeUtils } from "@domain/utils/compose.utils"
 import { FpUtils } from "@domain/utils/fp-utils"

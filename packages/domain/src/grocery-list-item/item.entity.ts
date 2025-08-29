@@ -9,7 +9,7 @@ import {
   UserEntity,
   UserIdSchema,
   type UserType,
-} from "@domain/user/user.entity"
+} from "@domain/user-orpc/user.entity"
 import { FpUtils } from "@domain/utils"
 import { BaseEntity, defineEntityStruct } from "@domain/utils/base.entity"
 import { Opt } from "@domain/utils/refined-types"

@@ -1,28 +1,40 @@
 import type { Result } from "@carbonteq/fp"
 import type { RepoResult } from "@domain/utils"
-import type { UserEntity, UserType } from "./user.entity"
-import type { UserNotFoundError } from "./user.errors"
+import type { UserEntity, UserType, UserUpdateType } from "./user.entity"
+import type { UserNotFoundError, UserAlreadyExistsError } from "./user.errors"
 
-export interface UserUpdateData {
-  name?: string
-  email?: UserType["email"]
-  emailVerified?: boolean
-  image?: UserType["image"]
+export interface UserFilterQuery {
+  email?: string
+  role?: "user" | "admin"
 }
 
-export abstract class UserRepository {
-  abstract create(user: UserEntity): Promise<Result<UserEntity, Error>>
-  abstract findById(
-    id: UserType["id"],
+export interface UserRepository {
+  // Essential CRUD operations
+  create(user: UserEntity): Promise<Result<UserEntity, UserAlreadyExistsError>>
+  update(user: UserEntity): Promise<RepoResult<UserEntity, UserNotFoundError>>
+  delete(id: UserType["id"]): Promise<Result<void, UserNotFoundError>>
+  
+  // Essential query operations
+  findById(id: UserType["id"]): Promise<RepoResult<UserEntity, UserNotFoundError>>
+  findByEmail(email: string): Promise<RepoResult<UserEntity, UserNotFoundError>>
+  
+  // Essential pagination and filtering
+  find(query?: UserFilterQuery, pagination?: { page: number; limit: number }): Promise<Result<UserEntity[], Error>>
+  
+  // Essential business operations
+  findByRole(role: "user" | "admin"): Promise<Result<UserEntity[], Error>>
+  exists(query: UserFilterQuery): Promise<Result<boolean, Error>>
+  count(query?: UserFilterQuery): Promise<Result<number, Error>>
+  
+  // DMS-specific operations
+  updateUserFields(
+    id: UserType["id"], 
+    updates: UserUpdateType
   ): Promise<RepoResult<UserEntity, UserNotFoundError>>
-  abstract findByEmail(
-    email: UserType["email"],
+  
+  // Authentication operations
+  findByEmailAndPassword(
+    email: string, 
+    passwordHash: string
   ): Promise<RepoResult<UserEntity, UserNotFoundError>>
-  abstract update(
-    id: UserType["id"],
-    updates: UserUpdateData,
-  ): Promise<RepoResult<UserEntity, UserNotFoundError>>
-  abstract delete(id: UserType["id"]): Promise<Result<void, UserNotFoundError>>
-  abstract exists(id: UserType["id"]): Promise<boolean>
-  abstract existsByEmail(email: UserType["email"]): Promise<boolean>
 }

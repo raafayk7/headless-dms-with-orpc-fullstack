@@ -4,7 +4,7 @@ import type {
   ItemStatus,
   ItemType,
 } from "@domain/grocery-list-item/item.entity"
-import type { UserType } from "@domain/user/user.entity"
+import type { UserType } from "@domain/user-orpc/user.entity"
 import type { RepoResult } from "@domain/utils"
 import type { ItemNotFoundError } from "./item.errors"
 

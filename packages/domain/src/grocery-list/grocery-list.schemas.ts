@@ -6,7 +6,7 @@ import {
   ItemCreateSchema,
   ItemSchema,
 } from "@domain/grocery-list-item/item.entity"
-import { UserSchema } from "@domain/user/user.entity"
+import { UserSchema } from "@domain/user-orpc/user.entity"
 import {
   PaginatedResultSchema,
   PaginationParamsSchema,

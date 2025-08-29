@@ -1,6 +1,6 @@
 import { Result as R, type UnitResult } from "@carbonteq/fp"
 import type { GroceryListEntity } from "@domain/grocery-list/grocery-list.entity"
-import type { UserEntity } from "@domain/user/user.entity"
+import type { UserEntity } from "@domain/user-orpc/user.entity"
 import type { InviteEntity } from "./invite.entity"
 
 export interface InviteUsageAttempt {
