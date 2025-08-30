@@ -8,32 +8,32 @@ export interface UserFilterQuery {
   role?: "user" | "admin"
 }
 
-export interface UserRepository {
+export abstract class UserRepository {
   // Essential CRUD operations
-  create(user: UserEntity): Promise<Result<UserEntity, UserAlreadyExistsError>>
-  update(user: UserEntity): Promise<RepoResult<UserEntity, UserNotFoundError>>
-  delete(id: UserType["id"]): Promise<Result<void, UserNotFoundError>>
+  abstract create(user: UserEntity): Promise<Result<UserEntity, UserAlreadyExistsError>>
+  abstract update(user: UserEntity): Promise<RepoResult<UserEntity, UserNotFoundError>>
+  abstract delete(id: UserType["id"]): Promise<Result<void, UserNotFoundError>>
   
   // Essential query operations
-  findById(id: UserType["id"]): Promise<RepoResult<UserEntity, UserNotFoundError>>
-  findByEmail(email: string): Promise<RepoResult<UserEntity, UserNotFoundError>>
+  abstract findById(id: UserType["id"]): Promise<RepoResult<UserEntity, UserNotFoundError>>
+  abstract findByEmail(email: string): Promise<RepoResult<UserEntity, UserNotFoundError>>
   
   // Essential pagination and filtering
-  find(query?: UserFilterQuery, pagination?: { page: number; limit: number }): Promise<Result<UserEntity[], Error>>
+  abstract find(query?: UserFilterQuery, pagination?: { page?: number; limit?: number }): Promise<Result<UserEntity[], Error>>
   
   // Essential business operations
-  findByRole(role: "user" | "admin"): Promise<Result<UserEntity[], Error>>
-  exists(query: UserFilterQuery): Promise<Result<boolean, Error>>
-  count(query?: UserFilterQuery): Promise<Result<number, Error>>
+  abstract findByRole(role: "user" | "admin"): Promise<Result<UserEntity[], Error>>
+  abstract exists(query: UserFilterQuery): Promise<Result<boolean, Error>>
+  abstract count(query?: UserFilterQuery): Promise<Result<number, Error>>
   
   // DMS-specific operations
-  updateUserFields(
+  abstract updateUserFields(
     id: UserType["id"], 
     updates: UserUpdateType
   ): Promise<RepoResult<UserEntity, UserNotFoundError>>
   
   // Authentication operations
-  findByEmailAndPassword(
+  abstract findByEmailAndPassword(
     email: string, 
     passwordHash: string
   ): Promise<RepoResult<UserEntity, UserNotFoundError>>
