@@ -74,14 +74,17 @@ export class DocumentEntity extends BaseEntity implements DocumentType {
 
   // Factory method for creating new documents
   static create(data: NewDocumentType): DocumentEntity {
+    // Validate the input data using the schema
+    const validatedData = S.decodeUnknownSync(NewDocumentSchema)(data)
+    
     const documentData: DocumentType = {
       ...DocumentSchema.baseInit(),
-      name: data.name,
-      filePath: data.filePath,
-      mimeType: data.mimeType,
-      size: data.size,
-      tags: data.tags,
-      metadata: data.metadata,
+      name: validatedData.name,
+      filePath: validatedData.filePath,
+      mimeType: validatedData.mimeType,
+      size: validatedData.size,
+      tags: validatedData.tags,
+      metadata: validatedData.metadata,
     }
     return new DocumentEntity(documentData)
   }
@@ -149,7 +152,7 @@ export class DocumentEntity extends BaseEntity implements DocumentType {
   // Tag operations
   hasTag(tag: string): boolean {
     if (!this.tags) return false
-    return this.tags.some(t => t.toLowerCase() === tag.toLowerCase())
+    return this.tags.some(t => t === tag) // Case sensitive comparison
   }
 
   hasAnyTag(searchTags: string[]): boolean {
@@ -209,7 +212,7 @@ export class DocumentEntity extends BaseEntity implements DocumentType {
   updateTags(newTags: string[]): DocumentEntity {
     const updatedData: DocumentType = {
       ...this,
-      tags: newTags.length > 0 ? newTags : undefined,
+      tags: newTags, // Always set tags, even if empty array
       updatedAt: new Date() as any, // Type assertion for now
     }
     return new DocumentEntity(updatedData)
@@ -227,16 +230,34 @@ export class DocumentEntity extends BaseEntity implements DocumentType {
     const newTags = this.tags.filter(tag => 
       !tagsToRemove.some(removeTag => tag.toLowerCase() === removeTag.toLowerCase())
     )
+    
+    // If no tags were removed, return the same instance
+    if (newTags.length === this.tags.length) {
+      return this
+    }
+    
+    // Always return a new instance with the remaining tags (even if empty)
     return this.updateTags(newTags)
   }
 
   updateMetadata(newMetadata: Record<string, string>): DocumentEntity {
     const currentMetadata = this.metadata || {}
+    
+    // If newMetadata is empty, we're clearing the metadata to empty object
+    if (Object.keys(newMetadata).length === 0) {
+      const updatedData: DocumentType = {
+        ...this,
+        metadata: {}, // Return empty object instead of undefined
+        updatedAt: new Date() as any, // Type assertion for now
+      }
+      return new DocumentEntity(updatedData)
+    }
+    
     const updatedMetadata = { ...currentMetadata, ...newMetadata }
     
     const updatedData: DocumentType = {
       ...this,
-      metadata: Object.keys(updatedMetadata).length > 0 ? updatedMetadata : undefined,
+      metadata: updatedMetadata,
       updatedAt: new Date() as any, // Type assertion for now
     }
     return new DocumentEntity(updatedData)
@@ -244,9 +265,18 @@ export class DocumentEntity extends BaseEntity implements DocumentType {
 
   // Utility methods
   isRecentlyUpdated(hours: number = 24): boolean {
-    const cutoffTime = new Date()
-    cutoffTime.setHours(cutoffTime.getHours() - hours)
-    return (this.updatedAt as any) > cutoffTime // Type assertion for now
+    // Get current time in milliseconds
+    const now = Date.now()
+    
+    // Calculate cutoff time in milliseconds
+    const cutoffMs = now - (hours * 60 * 60 * 1000)
+    
+    // Get the updatedAt timestamp in milliseconds
+    // Effect's DateTime.Utc has an epochMillis property
+    const updatedAtMs = (this.updatedAt as any).epochMillis
+    
+    // Simple comparison: if updatedAt is after cutoff, it's recent
+    return updatedAtMs > cutoffMs
   }
 
   serialize() {

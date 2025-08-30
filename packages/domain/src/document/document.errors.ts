@@ -24,7 +24,7 @@ export class DocumentAlreadyExistsError extends ConflictError {
   }
 }
 
-// Document file error (file not found, corrupted, etc.)
+// Document file error
 export class DocumentFileError extends ValidationError {
   override readonly code = "DOCUMENT_FILE_ERROR" as const
 

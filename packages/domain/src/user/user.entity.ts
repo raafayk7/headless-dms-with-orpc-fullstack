@@ -5,7 +5,11 @@ import { Schema as S } from "effect"
 
 // Define the User schema with DMS-specific fields
 export const UserSchema = defineEntityStruct("UserId", {
-  email: S.String.pipe(S.minLength(1), S.brand("Email")),
+  email: S.String.pipe(
+    S.minLength(1),
+    S.pattern(/^[^\s@]+@[^\s@]+\.[^\s@]+$/),
+    S.brand("Email")
+  ),
   passwordHash: S.String.pipe(S.minLength(1)),
   role: S.Union(
     S.Literal("user"),
@@ -19,26 +23,29 @@ export type UserType = S.Schema.Type<typeof UserSchema>
 export type UserEncoded = S.Schema.Encoded<typeof UserSchema>
 
 // Schema for creating new users (without passwordHash)
-export const NewUserSchema = UserSchema.pipe(
-  S.pick("email", "role"),
-  S.extend(
-    S.Struct({
-      password: S.String.pipe(S.minLength(8)),
-    }),
+export const NewUserSchema = S.Struct({
+  email: S.String.pipe(
+    S.minLength(1),
+    S.pattern(/^[^\s@]+@[^\s@]+\.[^\s@]+$/),
   ),
-)
+  role: S.Union(
+    S.Literal("user"),
+    S.Literal("admin")
+  ),
+})
 export type NewUserType = S.Schema.Type<typeof NewUserSchema>
 export type NewUserEncoded = S.Schema.Encoded<typeof NewUserSchema>
 
 // Schema for user updates
 export const UserUpdateSchema = S.Struct({
-  email: Opt(S.String.pipe(S.minLength(1), S.brand("Email"))),
-  role: Opt(S.Union(
+  email: S.optional(S.String.pipe(S.minLength(1), S.pattern(/^[^\s@]+@[^\s@]+\.[^\s@]+$/))),
+  role: S.optional(S.Union(
     S.Literal("user"),
     S.Literal("admin")
   )),
 })
 export type UserUpdateType = S.Schema.Type<typeof UserUpdateSchema>
+export type UserUpdateEncoded = S.Schema.Encoded<typeof UserUpdateSchema>
 
 const bridge = createEncoderDecoderBridge(UserSchema)
 
@@ -67,11 +74,30 @@ export class UserEntity extends BaseEntity implements UserType {
 
   // Factory method for creating new users
   static create(data: NewUserType, passwordHash: string): UserEntity {
+    // Validate the input data using the schema
+    const validatedData = S.decodeUnknownSync(NewUserSchema)(data)
+    
+    // Additional validation for password hash
+    if (!passwordHash || passwordHash.trim().length === 0) {
+      throw new Error("Password hash cannot be empty")
+    }
+    
+    // Additional validation for role
+    if (!["user", "admin"].includes(validatedData.role)) {
+      throw new Error(`Invalid role: ${validatedData.role}. Must be 'user' or 'admin'`)
+    }
+    
+    // Validate the email using the UserSchema to get the branded type
+    const emailValidation = S.decodeUnknownEither(UserSchema.pipe(S.pick("email")))({ email: validatedData.email })
+    if (emailValidation._tag === "Left") {
+      throw new Error("Invalid email format")
+    }
+    
     const userData: UserType = {
       ...UserSchema.baseInit(),
-      email: data.email,
+      email: emailValidation.right.email,
       passwordHash,
-      role: data.role,
+      role: validatedData.role,
     }
     return new UserEntity(userData)
   }
@@ -115,9 +141,15 @@ export class UserEntity extends BaseEntity implements UserType {
 
   // Update methods that return new instances
   updateEmail(newEmail: string): UserEntity {
+    // Validate the email using the UserSchema to get the branded type
+    const emailValidation = S.decodeUnknownEither(UserSchema.pipe(S.pick("email")))({ email: newEmail })
+    if (emailValidation._tag === "Left") {
+      throw new Error("Invalid email format")
+    }
+    
     const updatedData: UserType = {
       ...this,
-      email: newEmail as UserType["email"],
+      email: emailValidation.right.email,
       updatedAt: new Date() as any, // Type assertion for now
     }
     return new UserEntity(updatedData)
