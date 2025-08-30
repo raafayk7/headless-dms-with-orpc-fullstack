@@ -1,7 +1,7 @@
 import { Result as R, type Result } from "@carbonteq/fp"
 import type { DocumentEntity, DocumentType, DocumentUpdateType } from "@domain/document/document.entity"
 import { DocumentEntity as Document } from "@domain/document/document.entity"
-import { DocumentNotFoundError, DocumentAlreadyExistsError } from "@domain/document/document.errors"
+import { DocumentNotFoundError, DocumentAlreadyExistsError, DocumentValidationError } from "@domain/document/document.errors"
 import { DocumentRepository, type DocumentFilterQuery } from "@domain/document/document.repository"
 import { FpUtils, type RepoResult, type RepoUnitResult } from "@domain/utils"
 
@@ -13,17 +13,17 @@ import { documents } from "../schema"
 import { enhanceEntityMapper } from "./repo.utils"
 
 const mapper = enhanceEntityMapper((row: typeof documents.$inferSelect) =>
-  Document.fromRepository({
-    id: row.id,
+  Document.fromEncoded({
+    id: row.id as DocumentType["id"],
     name: row.name,
     filePath: row.filePath,
     mimeType: row.mimeType,
-    size: row.size.toString(),
+    size: row.size,
     tags: row.tags || [],
-    metadata: row.metadata || {},
+    metadata: row.metadata || { "" : "" },
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
-  }),
+  })
 )
 
 @injectable()
@@ -46,14 +46,16 @@ export class DrizzleDocumentRepository extends DocumentRepository {
       const encoded = FpUtils.serialized(document)
       const res = await encoded
         .map(async (docData) => {
-          const [newDoc] = await this.db.insert(documents).values({
-            ...docData,
-            id: document.id,
-            size: parseInt(docData.size),
-          }).returning()
+            const { id, ...docDataWithoutId } = docData
+            const [newDoc] = await this.db.insert(documents).values({
+              ...docDataWithoutId,
+              tags: docData.tags ? [...docData.tags] : [], // Convert readonly to mutable
+              metadata: docData.metadata ? { ...docData.metadata } : {}, // Convert readonly to mutable
+            }).returning()
 
           return document
         })
+        .mapErr(() => new DocumentAlreadyExistsError(document.name)) // Transform ValidationError to DocumentAlreadyExistsError
         .toPromise()
 
       return res
@@ -66,23 +68,26 @@ export class DrizzleDocumentRepository extends DocumentRepository {
     try {
       const encoded = FpUtils.serialized(document)
       const res = await encoded
-        .map(async (docData) => {
-          const [updatedDoc] = await this.db.update(documents)
-            .set({
-              ...docData,
-              size: parseInt(docData.size),
-              updatedAt: new Date(),
-            })
-            .where(eq(documents.id, document.id))
-            .returning()
+      .flatMap(async (docData) => {
+        const { id, ...docDataWithoutId } = docData
+        const [updatedDoc] = await this.db.update(documents)
+          .set({
+            ...docDataWithoutId,
+            tags: docData.tags ? [...docData.tags] : [],
+            metadata: docData.metadata ? { ...docData.metadata } : {},
+            updatedAt: new Date(),
+          })
+          .where(eq(documents.id, document.id))
+          .returning()
 
-          if (!updatedDoc) {
-            return R.Err(new DocumentNotFoundError(document.id))
-          }
+        if (!updatedDoc) {
+          return R.Err(new DocumentNotFoundError(document.id))
+        }
 
-          return document
-        })
-        .toPromise()
+        return R.Ok(document)
+      })
+      .mapErr(() => new DocumentNotFoundError(document.id)) // Transform ValidationError to DocumentNotFoundError
+      .toPromise()
 
       return res
     } catch (error) {
@@ -92,11 +97,12 @@ export class DrizzleDocumentRepository extends DocumentRepository {
 
   async delete(id: DocumentType["id"]): Promise<Result<void, DocumentNotFoundError>> {
     try {
-      const result = await this.db.delete(documents).where(eq(documents.id, id))
+        const deletedDocs = await this.db.delete(documents).where(eq(documents.id, id)).returning()
       
-      if ((result.rowCount ?? 0) === 0) {
+      if (deletedDocs.length === 0) {
         return R.Err(new DocumentNotFoundError(id))
       }
+// ... exis
 
       return R.Ok(undefined)
     } catch (error) {
@@ -127,12 +133,12 @@ export class DrizzleDocumentRepository extends DocumentRepository {
       })
 
       if (!row) {
-        return R.Err(new DocumentNotFoundError(name))
+        return R.Err(new DocumentValidationError("Document not found"))
       }
 
       return mapper.mapOne(row)
     } catch (error) {
-      return R.Err(new DocumentNotFoundError(name))
+      return R.Err(new DocumentValidationError("Document not found"))
     }
   }
 
@@ -301,6 +307,8 @@ export class DrizzleDocumentRepository extends DocumentRepository {
       const [updatedDoc] = await this.db.update(documents)
         .set({
           ...updates,
+          tags: updates.tags ? [...updates.tags] : [],
+          metadata: updates.metadata ? { ...updates.metadata } : {},
           updatedAt: new Date(),
         })
         .where(eq(documents.id, id))
@@ -323,12 +331,12 @@ export class DrizzleDocumentRepository extends DocumentRepository {
       })
 
       if (!row) {
-        return R.Err(new DocumentNotFoundError(filePath))
+        return R.Err(new DocumentValidationError("Document not found"))
       }
 
       return mapper.mapOne(row)
     } catch (error) {
-      return R.Err(new DocumentNotFoundError(filePath))
+      return R.Err(new DocumentValidationError("Document not found"))
     }
   }
 

@@ -1,7 +1,7 @@
 import { Result as R, type Result } from "@carbonteq/fp"
 import type { UserEntity, UserType, UserUpdateType } from "@domain/user/user.entity"
 import { UserEntity as User } from "@domain/user/user.entity"
-import { UserNotFoundError, UserAlreadyExistsError } from "@domain/user/user.errors"
+import { UserNotFoundError, UserAlreadyExistsError, UserValidationError } from "@domain/user/user.errors"
 import { UserRepository, type UserFilterQuery } from "@domain/user/user.repository"
 import { FpUtils, type RepoResult, type RepoUnitResult } from "@domain/utils"
 import { and, eq, sql, asc, ilike } from "drizzle-orm"
@@ -11,16 +11,19 @@ import { InjectDb } from "../conn"
 import { users } from "../schema"
 import { enhanceEntityMapper } from "./repo.utils"
 
-const mapper = enhanceEntityMapper((row: typeof users.$inferSelect) =>
-  User.fromRepository({
-    id: row.id,
+const mapper = enhanceEntityMapper((row: typeof users.$inferSelect) => {
+  // Transform database types to domain types
+  const transformedData = {
+    id: row.id as UserType["id"], // Cast to branded UUID type
     email: row.email,
     passwordHash: row.passwordHash,
-    role: row.role,
+    role: row.role as "user" | "admin", // Cast to union type
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
-  }),
-)
+  }
+  
+  return User.fromEncoded(transformedData)
+})
 
 @injectable()
 export class DrizzleUserRepository extends UserRepository {
@@ -28,7 +31,7 @@ export class DrizzleUserRepository extends UserRepository {
     super()
   }
 
-  async create(user: UserEntity): Promise<Result<UserEntity, UserAlreadyExistsError>> {
+  async create(user: UserEntity): Promise<R<UserEntity, UserAlreadyExistsError>> {
     try {
       // Check if user already exists
       const existing = await this.db.query.users.findFirst({
@@ -42,13 +45,14 @@ export class DrizzleUserRepository extends UserRepository {
       const encoded = FpUtils.serialized(user)
       const res = await encoded
         .map(async (userData) => {
-          const [newUser] = await this.db.insert(users).values({
-            ...userData,
-            id: user.id,
-          }).returning()
+            const { id, ...userDataWithoutId } = userData
+            const [newUser] = await this.db.insert(users).values({
+              ...userDataWithoutId,
+           }).returning()
 
-          return user
+           return user
         })
+        .mapErr(() => new UserAlreadyExistsError(user.email)) // Transform ValidationError to UserAlreadyExistsError
         .toPromise()
 
       return res
@@ -61,22 +65,24 @@ export class DrizzleUserRepository extends UserRepository {
     try {
       const encoded = FpUtils.serialized(user)
       const res = await encoded
-        .map(async (userData) => {
-          const [updatedUser] = await this.db.update(users)
-            .set({
-              ...userData,
-              updatedAt: new Date(),
-            })
-            .where(eq(users.id, user.id))
-            .returning()
+      .flatMap(async (userData) => {
+        const { id, ...userDataWithoutId } = userData
+        const [updatedUser] = await this.db.update(users)
+          .set({
+            ...userDataWithoutId,
+            updatedAt: new Date(),
+          })
+          .where(eq(users.id, user.id))
+          .returning()
 
-          if (!updatedUser) {
-            return R.Err(new UserNotFoundError(user.id))
-          }
+        if (!updatedUser) {
+          return R.Err(new UserNotFoundError(user.id))
+        }
 
-          return user
-        })
-        .toPromise()
+        return R.Ok(user)
+      })
+      .mapErr(() => new UserNotFoundError(user.id))
+      .toPromise()
 
       return res
     } catch (error) {
@@ -84,13 +90,13 @@ export class DrizzleUserRepository extends UserRepository {
     }
   }
 
-  async delete(id: UserType["id"]): Promise<Result<void, UserNotFoundError>> {
+  async delete(id: UserType["id"]): Promise<R<void, UserNotFoundError>> {
     try {
-      const result = await this.db.delete(users).where(eq(users.id, id))
+        const deletedUsers = await this.db.delete(users).where(eq(users.id, id)).returning()
       
-      if ((result.rowCount ?? 0) === 0) {
-        return R.Err(new UserNotFoundError(id))
-      }
+        if (deletedUsers.length === 0) {
+          return R.Err(new UserNotFoundError(id))
+        }
 
       return R.Ok(undefined)
     } catch (error) {
@@ -108,7 +114,11 @@ export class DrizzleUserRepository extends UserRepository {
         return R.Err(new UserNotFoundError(id))
       }
 
-      return mapper.mapOne(row)
+      const result = mapper.mapOne(row)
+      if (result.isErr()) {
+        return R.Err(new UserNotFoundError(id))
+      }
+      return R.Ok(result.unwrap())
     } catch (error) {
       return R.Err(new UserNotFoundError(id))
     }
@@ -121,16 +131,20 @@ export class DrizzleUserRepository extends UserRepository {
       })
 
       if (!row) {
-        return R.Err(new UserNotFoundError(email))
+        return R.Err(new UserValidationError("User not found"))
       }
 
-      return mapper.mapOne(row)
+      const result = mapper.mapOne(row)
+      if (result.isErr()) {
+        return R.Err(new UserValidationError("User not found"))
+      }
+      return R.Ok(result.unwrap())
     } catch (error) {
-      return R.Err(new UserNotFoundError(email))
+      return R.Err(new UserValidationError("User not found"))
     }
   }
 
-  async find(query?: UserFilterQuery, pagination?: { page?: number; limit?: number }): Promise<Result<UserEntity[], Error>> {
+  async find(query?: UserFilterQuery, pagination?: { page?: number; limit?: number }): Promise<R<UserEntity[], Error>> {
     try {
       const conditions = this.buildQueryConditions(query)
       const whereClause = conditions.length > 0 ? and(...conditions) : undefined
@@ -169,7 +183,7 @@ export class DrizzleUserRepository extends UserRepository {
     }
   }
 
-  async findByRole(role: "user" | "admin"): Promise<Result<UserEntity[], Error>> {
+  async findByRole(role: "user" | "admin"): Promise<R<UserEntity[], Error>> {
     try {
       const results = await this.db.select()
         .from(users)
@@ -188,7 +202,7 @@ export class DrizzleUserRepository extends UserRepository {
     }
   }
 
-  async exists(query: UserFilterQuery): Promise<Result<boolean, Error>> {
+  async exists(query: UserFilterQuery): Promise<R<boolean, Error>> {
     try {
       const conditions = this.buildQueryConditions(query)
       const whereClause = conditions.length > 0 ? and(...conditions) : undefined
@@ -204,7 +218,7 @@ export class DrizzleUserRepository extends UserRepository {
     }
   }
 
-  async count(query?: UserFilterQuery): Promise<Result<number, Error>> {
+  async count(query?: UserFilterQuery): Promise<R<number, Error>> {
     try {
       const conditions = this.buildQueryConditions(query)
       const whereClause = conditions.length > 0 ? and(...conditions) : undefined
@@ -237,7 +251,11 @@ export class DrizzleUserRepository extends UserRepository {
         return R.Err(new UserNotFoundError(id))
       }
 
-      return mapper.mapOne(updatedUser)
+      const result = mapper.mapOne(updatedUser)
+      if (result.isErr()) {
+        return R.Err(new UserNotFoundError(id))
+      }
+      return R.Ok(result.unwrap())
     } catch (error) {
       return R.Err(new UserNotFoundError(id))
     }
@@ -256,12 +274,16 @@ export class DrizzleUserRepository extends UserRepository {
       })
 
       if (!row) {
-        return R.Err(new UserNotFoundError(email))
+        return R.Err(new UserValidationError("User not found"))
       }
 
-      return mapper.mapOne(row)
+      const result = mapper.mapOne(row)
+      if (result.isErr()) {
+        return R.Err(new UserValidationError("User not found"))
+      }
+      return R.Ok(result.unwrap())
     } catch (error) {
-      return R.Err(new UserNotFoundError(email))
+      return R.Err(new UserValidationError("User not found"))
     }
   }
 
