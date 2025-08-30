@@ -340,16 +340,6 @@ export class DrizzleDocumentRepository extends DocumentRepository {
     }
   }
 
-  async findDocumentsByUser(userId: string): Promise<Result<DocumentEntity[], Error>> {
-    try {
-      // TODO: Add userId field to documents schema
-      // For now, return empty array
-      return R.Ok([])
-    } catch (error) {
-      return R.Err(new Error(`Failed to find documents by user: ${error}`))
-    }
-  }
-
   async searchDocuments(searchTerm: string): Promise<Result<DocumentEntity[], Error>> {
     try {
       const results = await this.db.select()

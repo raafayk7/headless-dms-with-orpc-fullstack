@@ -24,6 +24,7 @@
     "@scalar/openapi-types": "^0.3.6",
     "@standard-schema/spec": "^1.0.0",
     "@types/bun": "catalog:",
+    "@types/pg": "^8.15.5",
     "@typescript/native-preview": "catalog:",
     "drizzle-kit": "^0.31.4",
     "oxlint": "catalog:",
@@ -42,6 +43,8 @@
     "env-var": "^7.5.0",
     "fast-jwt": "^6.0.2",
     "hono": "^4.8.5",
+    "pg": "^8.16.3",
+    "postgres": "^3.4.7",
     "reflect-metadata": "^0.2.2",
     "tsyringe": "catalog:",
     "zod": "catalog:"

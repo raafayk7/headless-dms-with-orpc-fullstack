@@ -42,7 +42,6 @@ export abstract class DocumentRepository {
   
   // File operations
   abstract findByFilePath(filePath: string): Promise<RepoResult<DocumentEntity, DocumentNotFoundError>>
-  abstract findDocumentsByUser(userId: string): Promise<Result<DocumentEntity[], Error>>
   
   // Search operations
   abstract searchDocuments(searchTerm: string): Promise<Result<DocumentEntity[], Error>>

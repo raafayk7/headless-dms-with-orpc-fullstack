@@ -83,7 +83,4 @@ export const documents = pgTable("documents", {
   size: integer("size").notNull(), // Using integer for file size in bytes
   tags: text("tags").array().default(sql`ARRAY[]::text[]`),
   metadata: jsonb("metadata").$type<Record<string, string>>().default({}),
-  userId: uuid("user_id")
-    .$type<UserId>()
-    .references(() => users.id, { onDelete: "cascade" }),
 })

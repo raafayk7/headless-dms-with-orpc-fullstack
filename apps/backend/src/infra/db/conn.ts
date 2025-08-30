@@ -1,5 +1,5 @@
-import { SQL } from "bun"
-import { type BunSQLDatabase, drizzle } from "drizzle-orm/bun-sql"
+import { drizzle } from "drizzle-orm/postgres-js"
+import postgres from "postgres"
 import {
   container,
   type DependencyContainer,
@@ -12,13 +12,12 @@ import config from "@/infra/config"
 import * as schema from "./schema"
 
 export const createDbInstance = () => {
-  const client = new SQL(config.db.DB_URL, {
+  const client = postgres(config.db.DB_URL, {
     max: 25, // Reduced from 25 to avoid connection limit issues
-    idleTimeout: 60, // Close idle connections after 60 seconds
+    idle_timeout: 60, // Close idle connections after 60 seconds
   })
 
-  const db = drizzle({
-    client,
+  const db = drizzle(client, {
     schema,
     logger: config.app.NODE_ENV === "development",
   })
@@ -27,7 +26,7 @@ export const createDbInstance = () => {
 }
 
 const DbSym = Symbol.for("Database")
-export type AppDatabase = BunSQLDatabase<typeof schema>
+export type AppDatabase = ReturnType<typeof createDbInstance>
 
 export const DbProvider: FactoryProvider<AppDatabase> = {
   useFactory: instanceCachingFactory(createDbInstance),
