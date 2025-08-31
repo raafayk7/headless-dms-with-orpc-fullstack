@@ -11,18 +11,25 @@ import { InjectDb } from "../conn"
 import { users } from "../schema"
 import { enhanceEntityMapper } from "./repo.utils"
 
-const mapper = enhanceEntityMapper((row: typeof users.$inferSelect) => {
+const mapper = enhanceEntityMapper<typeof users.$inferSelect, UserEntity>((row: typeof users.$inferSelect) => {
   // Transform database types to domain types
   const transformedData = {
-    id: row.id as UserType["id"], // Cast to branded UUID type
+    id: row.id,
+    name: row.name,
     email: row.email,
     passwordHash: row.passwordHash,
-    role: row.role as "user" | "admin", // Cast to union type
+    role: row.role,
+    emailVerified: row.emailVerified,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   }
   
-  return User.fromEncoded(transformedData)
+  try {
+    const user = User.fromRepository(transformedData)
+    return R.Ok(user)
+  } catch (error) {
+    return R.Err(new UserValidationError("Failed to create user entity from repository data"))
+  }
 })
 
 @injectable()
