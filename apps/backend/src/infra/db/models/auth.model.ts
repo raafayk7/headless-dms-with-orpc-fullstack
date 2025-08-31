@@ -57,7 +57,7 @@
 // NEW DMS TABLES
 import type { UserType } from "@domain/user/user.entity"
 import type { DocumentType } from "@domain/document/document.entity"
-import { pgTable, text, timestamp, uuid, jsonb, integer } from "drizzle-orm/pg-core"
+import { pgTable, text, timestamp, uuid, jsonb, integer, boolean } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
 import { getBaseColumns, getPrimaryKeyCol } from "../db.utils"
 
@@ -68,9 +68,11 @@ type DocumentId = DocumentType["id"]
 export const users = pgTable("users", {
   ...getBaseColumns<UserId>(),
   
+  name: text("name").notNull(), // Better-auth requirement
   email: text("email").notNull().unique(),
   passwordHash: text("password_hash").notNull(),
   role: text("role", { enum: ["user", "admin"] }).notNull().default("user"),
+  emailVerified: boolean("email_verified").notNull().default(false),
 })
 
 // DMS Document table
