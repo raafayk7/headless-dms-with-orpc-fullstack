@@ -15,6 +15,13 @@
       "when": 1756579854876,
       "tag": "0001_init",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1756655500840,
+      "tag": "0002_tables-with-auth",
+      "breakpoints": true
     }
   ]
 }
