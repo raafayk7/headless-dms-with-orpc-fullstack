@@ -5,6 +5,11 @@ import { Schema as S } from "effect"
 
 // Define the User schema with DMS-specific fields
 export const UserSchema = defineEntityStruct("UserId", {
+  name: S.String.pipe(
+    S.minLength(1),
+    S.maxLength(255),
+    S.brand("Name")
+  ),
   email: S.String.pipe(
     S.minLength(1),
     S.pattern(/^[^\s@]+@[^\s@]+\.[^\s@]+$/),
@@ -15,6 +20,7 @@ export const UserSchema = defineEntityStruct("UserId", {
     S.Literal("user"),
     S.Literal("admin")
   ),
+  emailVerified: S.Boolean,
 })
 
 export const UserIdSchema = UserSchema.id
@@ -24,6 +30,10 @@ export type UserEncoded = S.Schema.Encoded<typeof UserSchema>
 
 // Schema for creating new users (without passwordHash)
 export const NewUserSchema = S.Struct({
+  name: S.String.pipe(
+    S.minLength(1),
+    S.maxLength(255),
+  ),
   email: S.String.pipe(
     S.minLength(1),
     S.pattern(/^[^\s@]+@[^\s@]+\.[^\s@]+$/),
@@ -38,6 +48,10 @@ export type NewUserEncoded = S.Schema.Encoded<typeof NewUserSchema>
 
 // Schema for user updates
 export const UserUpdateSchema = S.Struct({
+  name: S.optional(S.String.pipe(
+    S.minLength(1),
+    S.maxLength(255)
+  )),
   email: S.optional(S.String.pipe(S.minLength(1), S.pattern(/^[^\s@]+@[^\s@]+\.[^\s@]+$/))),
   role: S.optional(S.Union(
     S.Literal("user"),
@@ -52,16 +66,20 @@ const bridge = createEncoderDecoderBridge(UserSchema)
 export class UserEntity extends BaseEntity implements UserType {
   override readonly id: UserType["id"]
 
+  readonly name: UserType["name"]
   readonly email: UserType["email"]
   readonly passwordHash: string
   readonly role: UserType["role"]
+  readonly emailVerified: UserType["emailVerified"]
 
   private constructor(data: UserType) {
     super(data)
     this.id = data.id
+    this.name = data.name
     this.email = data.email
     this.passwordHash = data.passwordHash
     this.role = data.role
+    this.emailVerified = data.emailVerified
   }
 
   static from(data: UserType): UserEntity {
@@ -92,12 +110,20 @@ export class UserEntity extends BaseEntity implements UserType {
     if (emailValidation._tag === "Left") {
       throw new Error("Invalid email format")
     }
+
+    // Validate the name using the UserSchema to get the branded type
+    const nameValidation = S.decodeUnknownEither(UserSchema.pipe(S.pick("name")))({ name: validatedData.name })
+    if (nameValidation._tag === "Left") {
+      throw new Error("Invalid name format")
+    }
     
     const userData: UserType = {
       ...UserSchema.baseInit(),
+      name: nameValidation.right.name,
       email: emailValidation.right.email,
       passwordHash,
       role: validatedData.role,
+      emailVerified: false, // Default to false for new users
     }
     return new UserEntity(userData)
   }
@@ -105,18 +131,22 @@ export class UserEntity extends BaseEntity implements UserType {
   // Factory method for creating from repository data
   static fromRepository(data: {
     id: string
+    name: string
     email: string
     passwordHash: string
     role: string
+    emailVerified: boolean
     createdAt: Date
     updatedAt: Date
   }): UserEntity {
     // Convert Date to the proper DateTime type expected by the schema
     const userData: UserType = {
       id: UserIdSchema.new(), // Use new() instead of fromTrusted
+      name: data.name as UserType["name"],
       email: data.email as UserType["email"],
       passwordHash: data.passwordHash,
       role: data.role as UserType["role"],
+      emailVerified: data.emailVerified,
       createdAt: data.createdAt as any, // Type assertion for now
       updatedAt: data.updatedAt as any, // Type assertion for now
     }
@@ -140,6 +170,21 @@ export class UserEntity extends BaseEntity implements UserType {
   }
 
   // Update methods that return new instances
+  updateName(newName: string): UserEntity {
+    // Validate the name using the UserSchema to get the branded type
+    const nameValidation = S.decodeUnknownEither(UserSchema.pipe(S.pick("name")))({ name: newName })
+    if (nameValidation._tag === "Left") {
+      throw new Error("Invalid name format")
+    }
+    
+    const updatedData: UserType = {
+      ...this,
+      name: nameValidation.right.name,
+      updatedAt: new Date() as any, // Type assertion for now
+    }
+    return new UserEntity(updatedData)
+  }
+
   updateEmail(newEmail: string): UserEntity {
     // Validate the email using the UserSchema to get the branded type
     const emailValidation = S.decodeUnknownEither(UserSchema.pipe(S.pick("email")))({ email: newEmail })
@@ -173,6 +218,16 @@ export class UserEntity extends BaseEntity implements UserType {
     return new UserEntity(updatedData)
   }
 
+  // New method to verify email
+  verifyEmail(): UserEntity {
+    const updatedData: UserType = {
+      ...this,
+      emailVerified: true,
+      updatedAt: new Date() as any, // Type assertion for now
+    }
+    return new UserEntity(updatedData)
+  }
+
   serialize() {
     return bridge.serialize(this)
   }
@@ -180,17 +235,21 @@ export class UserEntity extends BaseEntity implements UserType {
   // Convert to repository format
   toRepository(): {
     id: string
+    name: string
     email: string
     passwordHash: string
     role: string
+    emailVerified: boolean
     createdAt: Date
     updatedAt: Date
   } {
     return {
       id: this.id,
+      name: this.name,
       email: this.email,
       passwordHash: this.passwordHash,
       role: this.role,
+      emailVerified: this.emailVerified,
       createdAt: this.createdAt as any, // Type assertion for now
       updatedAt: this.updatedAt as any, // Type assertion for now
     }
