@@ -53,8 +53,8 @@ export const createBetterAuthInstance = <T extends Record<string, any>>(
 
     session: {
       cookieCache: { enabled: true, maxAge: 60 * 5 }, // check session in database every 5 minutes
-      expiresIn: 60 * 60 * 24 * 7, // 7 days
-      updateAge: 60 * 60 * 24, // update session every day
+      expiresIn: 60 * 60, // 1 hour (changed from 7 days to meet DMS requirement)
+      updateAge: 60 * 60, // update session every hour (changed from daily to match expiry)
     },
 
     advanced: {
