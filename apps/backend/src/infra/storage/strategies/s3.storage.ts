@@ -3,7 +3,7 @@ import { injectable } from "tsyringe"
 import { Result } from "@carbonteq/fp"
 import { StorageError } from "../storage.strategy"
 import type { IStorageStrategy, FileInfo } from "../storage.strategy"
-import storageConfig from "../storage.config"
+import storageConfig from "../../config/storage.config"
 
 @injectable()
 export class S3StorageStrategy implements IStorageStrategy {

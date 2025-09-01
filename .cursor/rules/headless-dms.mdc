@@ -282,3 +282,19 @@ Create proper route handlers that handle each request by calling upon the proper
 1. Create config file to load variables
 2. Create bootstrap file
 3. Create single entry point app.ts file
+
+
+## Action Plan (Additional)
+
+### Seed data using Faker
+
+Create realistic seed data using faker.js
+
+### Observability
+
+Create metrics setup with NewRelic
+
+### CLI
+
+1. use commander for server instantiation
+2. create CLI tool for bulk download

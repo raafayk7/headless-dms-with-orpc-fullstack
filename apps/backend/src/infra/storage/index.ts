@@ -1,5 +1,5 @@
 export * from "./storage.strategy"
 export * from "./storage.service"
-export * from "./storage.config"
+export * from "../config/storage.config"
 export * from "./strategies/local.storage"
 export * from "./strategies/s3.storage"

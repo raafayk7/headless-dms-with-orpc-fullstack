@@ -5,7 +5,7 @@ import { StorageError } from "./storage.strategy"
 import type { IStorageStrategy, FileInfo } from "./storage.strategy"
 import { LocalStorageStrategy } from "./strategies/local.storage"
 import { S3StorageStrategy } from "./strategies/s3.storage"
-import storageConfig from "./storage.config"
+import storageConfig from "../config/storage.config"
 
 @injectable()
 export class StorageService {

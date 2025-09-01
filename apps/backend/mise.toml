@@ -8,16 +8,16 @@ PROJECT_NAME = "{{ config_root | basename }}"
 [tasks.dev]
 alias = "d"
 description = "Run dev server"
-run = "bun run --hot ./src/web/server.ts"
+run = "bun run --hot ./src/app.ts"
 
 [tasks.compile]
 description = "Compile API server"
-run = "bun build --compile --target bun ./src/web/server.ts"
+run = "bun build --compile --target bun ./src/app.ts"
 
 [tasks.build]
 alias = "b"
 description = "Build API server"
-run = "bun build --target bun --outfile ./dist/server.js ./src/web/server.ts"
+run = "bun build --target bun --outfile ./dist/server.js ./src/app.ts"
 
 [tasks.start]
 description = "Start API server"

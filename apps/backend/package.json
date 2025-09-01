@@ -5,8 +5,8 @@
   "packageManager": "bun@1.2.19",
   "type": "module",
   "scripts": {
-    "build": "bun build --target bun --outfile dist/server.js ./src/web/server.ts",
-    "dev": "bun run --watch src/web/server.ts",
+    "build": "bun build --target bun --outfile dist/server.js ./src/app.ts",
+    "dev": "bun run --watch src/app.ts",
     "start": "node dist/server.js",
     "db:studio": "drizzle-kit studio",
     "db:generate": "drizzle-kit generate --name",
