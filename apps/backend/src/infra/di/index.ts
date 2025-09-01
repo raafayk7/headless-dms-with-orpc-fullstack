@@ -1,20 +1,21 @@
-import { GroceryListWorkflows } from "@application/workflows"
+import { GroceryListWorkflows, UserWorkflows, DocumentWorkflows } from "@application/workflows"
 import { container } from "tsyringe"
 import { registerRepositories } from "../db/repos/di"
 import { StorageService } from "../storage"
+import { JwtService } from "@application/services/jwt.service"
 
-const services = [StorageService] as const
-const workflows = [GroceryListWorkflows] as const
+const services = [StorageService, JwtService] as const
+const workflows = [GroceryListWorkflows, UserWorkflows, DocumentWorkflows] as const
 
 export const wireDi = () => {
   registerRepositories()
 
   // register application services
-  for (const service of services) {
-    container.registerSingleton(service, service)
-  }
+  container.registerSingleton(StorageService, StorageService)
+  container.registerSingleton(JwtService, JwtService)
 
-  for (const workflow of workflows) {
-    container.registerSingleton(workflow, workflow)
-  }
+  // register workflows
+  container.registerSingleton(GroceryListWorkflows, GroceryListWorkflows)
+  container.registerSingleton(UserWorkflows, UserWorkflows)
+  container.registerSingleton(DocumentWorkflows, DocumentWorkflows)
 }

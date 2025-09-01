@@ -7,10 +7,16 @@ export interface DocumentFilterQuery {
   name?: string
   mimeType?: string
   tags?: string[]
+  metadata?: Record<string, string>
   fromDate?: Date
   toDate?: Date
   minSize?: number
   maxSize?: number
+}
+
+export interface DocumentPaginationParams {
+  page: number
+  limit: number
 }
 
 export abstract class DocumentRepository {
@@ -24,7 +30,10 @@ export abstract class DocumentRepository {
   abstract findByName(name: string): Promise<RepoResult<DocumentEntity, DocumentNotFoundError>>
   
   // Essential pagination and filtering
-  abstract find(query?: DocumentFilterQuery, pagination?: { page?: number; limit?: number }): Promise<Result<DocumentEntity[], Error>>
+  abstract find(
+    query?: DocumentFilterQuery, 
+    pagination?: DocumentPaginationParams
+  ): Promise<Result<DocumentEntity[], Error>>
   
   // Essential business operations
   abstract findByTags(tags: string[]): Promise<Result<DocumentEntity[], Error>>

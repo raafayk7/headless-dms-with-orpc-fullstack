@@ -83,8 +83,8 @@ export class DocumentEntity extends BaseEntity implements DocumentType {
       filePath: validatedData.filePath,
       mimeType: validatedData.mimeType,
       size: validatedData.size,
-      tags: validatedData.tags,
-      metadata: validatedData.metadata,
+      tags: validatedData.tags || [],
+      metadata: validatedData.metadata || {},
     }
     return new DocumentEntity(documentData)
   }
@@ -107,8 +107,8 @@ export class DocumentEntity extends BaseEntity implements DocumentType {
       filePath: data.filePath,
       mimeType: data.mimeType,
       size: data.size,
-      tags: data.tags.length > 0 ? data.tags : undefined,
-      metadata: Object.keys(data.metadata).length > 0 ? data.metadata : undefined,
+      tags: data.tags.length > 0 ? data.tags : [],
+      metadata: Object.keys(data.metadata).length > 0 ? data.metadata : {},
       createdAt: data.createdAt as any, // Type assertion for now
       updatedAt: data.updatedAt as any, // Type assertion for now
     }
@@ -241,23 +241,9 @@ export class DocumentEntity extends BaseEntity implements DocumentType {
   }
 
   updateMetadata(newMetadata: Record<string, string>): DocumentEntity {
-    const currentMetadata = this.metadata || {}
-    
-    // If newMetadata is empty, we're clearing the metadata to empty object
-    if (Object.keys(newMetadata).length === 0) {
-      const updatedData: DocumentType = {
-        ...this,
-        metadata: {}, // Return empty object instead of undefined
-        updatedAt: new Date() as any, // Type assertion for now
-      }
-      return new DocumentEntity(updatedData)
-    }
-    
-    const updatedMetadata = { ...currentMetadata, ...newMetadata }
-    
     const updatedData: DocumentType = {
       ...this,
-      metadata: updatedMetadata,
+      metadata: newMetadata, // Always replace metadata completely
       updatedAt: new Date() as any, // Type assertion for now
     }
     return new DocumentEntity(updatedData)

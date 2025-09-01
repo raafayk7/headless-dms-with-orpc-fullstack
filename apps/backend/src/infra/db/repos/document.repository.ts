@@ -142,7 +142,7 @@ export class DrizzleDocumentRepository extends DocumentRepository {
     }
   }
 
-  async find(query?: DocumentFilterQuery, pagination?: { page?: number; limit?: number }): Promise<Result<DocumentEntity[], Error>> {
+  async find(query?: DocumentFilterQuery, pagination?: { page: number; limit: number }): Promise<Result<DocumentEntity[], Error>> {
     try {
       const conditions = this.buildQueryConditions(query)
       const whereClause = conditions.length > 0 ? and(...conditions) : undefined
@@ -155,8 +155,8 @@ export class DrizzleDocumentRepository extends DocumentRepository {
       const total = countResult[0]?.count || 0
 
       // Apply pagination
-      const page = pagination?.page || 1
-      const limit = pagination?.limit || 10
+      const page = pagination ? pagination.page : 1
+      const limit = pagination ? pagination.limit : 10
       const offset = (page - 1) * limit
 
       // Get paginated results
@@ -400,6 +400,14 @@ export class DrizzleDocumentRepository extends DocumentRepository {
     
     if (query?.tags && query.tags.length > 0) {
       conditions.push(arrayOverlaps(documents.tags, query.tags))
+    }
+    
+    if (query?.metadata && Object.keys(query.metadata).length > 0) {
+      // For metadata filtering, we need to check if the metadata object contains the specified key-value pairs
+      // This is a simplified approach - in a real implementation, you might want more sophisticated JSON querying
+      Object.entries(query.metadata).forEach(([key, value]) => {
+        conditions.push(sql`${documents.metadata}->${key} = ${value}`)
+      })
     }
     
     if (query?.fromDate) {

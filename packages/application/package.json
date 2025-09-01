@@ -25,6 +25,7 @@
     "@types/bcryptjs": "^2.4.6",
     "@types/bun": "catalog:",
     "@types/json-schema": "^7.0.15",
+    "@types/jsonwebtoken": "^9.0.10",
     "@typescript/native-preview": "catalog:",
     "oxlint": "catalog:",
     "typescript": "catalog:"
@@ -33,6 +34,7 @@
     "@carbonteq/fp": "catalog:",
     "bcryptjs": "^2.4.3",
     "effect": "catalog:",
+    "jsonwebtoken": "^9.0.2",
     "tsyringe": "catalog:",
     "zod": "catalog:"
   }

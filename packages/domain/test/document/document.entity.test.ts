@@ -158,8 +158,8 @@ describe("DocumentEntity", () => {
         })
 
         expect(document.name).toBe("minimal.pdf")
-        expect(document.tags).toBeUndefined()
-        expect(document.metadata).toBeUndefined()
+        expect(document.tags).toEqual([])
+        expect(document.metadata).toEqual({})
       })
     })
 
@@ -203,8 +203,8 @@ describe("DocumentEntity", () => {
 
         const document = DocumentEntity.fromRepository(repoData)
 
-        expect(document.tags).toBeUndefined()
-        expect(document.metadata).toBeUndefined()
+        expect(document.tags).toEqual([])
+        expect(document.metadata).toEqual({})
       })
     })
 
@@ -659,26 +659,7 @@ describe("DocumentEntity", () => {
       expect(updatedDoc.id).toBe(document.id) // ID should remain same
     })
 
-    it("should merge with existing metadata", () => {
-      const document = DocumentEntity.create({
-        name: "original.pdf",
-        filePath: "/uploads/original.pdf",
-        mimeType: "application/pdf",
-        size: 1024,
-        tags: ["pdf", "original"],
-        metadata: { author: "original-user" }
-      })
 
-      const additionalMetadata = { category: "new-category", priority: "high" }
-      const updatedDoc = document.updateMetadata(additionalMetadata)
-
-      expect(updatedDoc.metadata).toEqual({
-        author: "original-user",
-        category: "new-category",
-        priority: "high"
-      })
-      expect(updatedDoc).not.toBe(document) // Should be new instance
-    })
 
     it("should handle empty metadata object", () => {
       const document = DocumentEntity.create({
