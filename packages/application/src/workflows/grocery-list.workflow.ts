@@ -16,7 +16,7 @@ import type {
 } from "@domain/grocery-list/grocery-list.schemas"
 import { GroceryListService } from "@domain/grocery-list/grocery-list.service"
 import { ItemRepository } from "@domain/grocery-list-item/item.repository"
-import type { UserEntity } from "@domain/user/user.entity"
+import type { UserEntity } from "@domain/user-orpc/user.entity"
 import type { PaginationParams } from "@domain/utils"
 import { FpUtils } from "@domain/utils/fp-utils"
 import { DateTime as DT } from "effect"
