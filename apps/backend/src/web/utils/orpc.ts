@@ -1,8 +1,10 @@
 import { implement } from "@orpc/server"
-import { CONTRACT } from "@repo/contract/contracts"
+import { CONTRACT } from "@contract/contracts"
 import type { AppContext, AuthenticatedContext } from "@/web/types"
 
-// export const pub = implement(CONTRACT.public)
+export const publicRoutes = implement(CONTRACT.public)
+  .$context<AppContext>()
+
 export const authenticated = implement(CONTRACT.authenticated)
   .$context<AppContext>()
   .use(({ context: { auth, ...rest }, next, errors }) => {

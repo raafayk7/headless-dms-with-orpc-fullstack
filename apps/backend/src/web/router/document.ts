@@ -1,0 +1,182 @@
+import { DocumentWorkflows } from "@application/workflows"
+import { container } from "tsyringe"
+import { authenticated } from "../utils/orpc"
+import { handleAppResult } from "../utils/result-handler"
+import { requireAdmin } from "../utils/rbac"
+
+const base = authenticated.document
+
+// Get documents with filtering and pagination (authenticated)
+const getDocumentsHandler = base.getDocuments.handler(async ({ input }) => {
+  const documentWorkflows = container.resolve(DocumentWorkflows)
+  // Transform query to match expected DTO format
+  const filters = {
+    name: input.query.name,
+    mimeType: input.query.mimeType,
+    tags: input.query.tags ? input.query.tags.split(',').map(t => t.trim()) : undefined,
+    metadata: input.query.metadata ? JSON.parse(input.query.metadata) : undefined,
+  }
+  
+  const result = await documentWorkflows.getDocuments(
+    { data: filters },
+    { data: { page: input.query.page || 1, limit: input.query.limit || 10 } }
+  )
+  
+  if (result.isErr()) {
+    return handleAppResult(result)
+  }
+  
+  const documents = result.unwrap()
+  const serializedDocuments = documents.map(doc => ({
+    id: doc.id,
+    name: doc.name,
+    mimeType: doc.mimeType,
+    filePath: doc.filePath,
+    size: doc.size,
+    tags: doc.tags,
+    metadata: doc.metadata,
+    createdAt: new Date(doc.createdAt.epochMillis).toISOString(),
+    updatedAt: new Date(doc.updatedAt.epochMillis).toISOString(),
+  }))
+  
+  return {
+    documents: serializedDocuments,
+    pagination: {
+      page: input.query.page || 1,
+      limit: input.query.limit || 10,
+      total: documents.length,
+      totalPages: Math.ceil(documents.length / (input.query.limit || 10)),
+    }
+  }
+})
+
+// Get document by ID (authenticated)
+const getDocumentByIdHandler = base.getDocumentById.handler(async ({ input }) => {
+  const documentWorkflows = container.resolve(DocumentWorkflows)
+  const result = await documentWorkflows.getDocumentById(input.params.id)
+  
+  if (result.isErr()) {
+    return handleAppResult(result)
+  }
+  
+  const document = result.unwrap()
+  return {
+    id: document.id,
+    name: document.name,
+    mimeType: document.mimeType,
+    filePath: document.filePath,
+    size: document.size,
+    tags: document.tags,
+    metadata: document.metadata,
+    createdAt: new Date(document.createdAt.epochMillis).toISOString(),
+    updatedAt: new Date(document.updatedAt.epochMillis).toISOString(),
+  }
+})
+
+// Upload document (admin only)
+const uploadDocumentHandler = base.uploadDocument.handler(requireAdmin(async ({ input }) => {
+  const documentWorkflows = container.resolve(DocumentWorkflows)
+  const result = await documentWorkflows.uploadDocument(input)
+  
+  if (result.isErr()) {
+    return handleAppResult(result)
+  }
+  
+  const document = result.unwrap()
+  return {
+    id: document.id,
+    name: document.name,
+    mimeType: document.mimeType,
+    filePath: document.filePath,
+    size: document.size,
+    tags: document.tags,
+    metadata: document.metadata,
+    createdAt: new Date(document.createdAt.epochMillis).toISOString(),
+    updatedAt: new Date(document.updatedAt.epochMillis).toISOString(),
+  }
+}))
+
+// Update document (admin only)
+const updateDocumentHandler = base.updateDocument.handler(requireAdmin(async ({ input }) => {
+  const documentWorkflows = container.resolve(DocumentWorkflows)
+  const result = await documentWorkflows.patchDocument(input.params.id, { data: input.body })
+  
+  if (result.isErr()) {
+    return handleAppResult(result)
+  }
+  
+  const document = result.unwrap()
+  return {
+    id: document.id,
+    name: document.name,
+    mimeType: document.mimeType,
+    filePath: document.filePath,
+    size: document.size,
+    tags: document.tags,
+    metadata: document.metadata,
+    createdAt: new Date(document.createdAt.epochMillis).toISOString(),
+    updatedAt: new Date(document.updatedAt.epochMillis).toISOString(),
+  }
+}))
+
+// Generate download link (authenticated)
+const generateDownloadLinkHandler = base.generateDownloadLink.handler(async ({ input }) => {
+  const documentWorkflows = container.resolve(DocumentWorkflows)
+  const result = await documentWorkflows.generateDownloadToken(input.params.id, 5) // 5 minutes expiry
+  
+  if (result.isErr()) {
+    return handleAppResult(result)
+  }
+  
+  const token = result.unwrap()
+  const expiresAt = new Date(Date.now() + 5 * 60 * 1000) // 5 minutes from now
+  
+  return {
+    downloadUrl: `/api/document/download?token=${token}`,
+    expiresAt: expiresAt.toISOString(),
+  }
+})
+
+// Download document by token (authenticated - not admin protected)
+const downloadDocumentByTokenHandler = base.downloadDocumentByToken.handler(async ({ input }) => {
+  const documentWorkflows = container.resolve(DocumentWorkflows)
+  const result = await documentWorkflows.downloadDocumentByToken(input.query.token)
+  
+  if (result.isErr()) {
+    return handleAppResult(result)
+  }
+  
+  const { document, file } = result.unwrap()
+  return {
+    document: {
+      id: document.id,
+      name: document.name,
+      mimeType: document.mimeType,
+      filePath: document.filePath,
+      size: document.size,
+      tags: document.tags,
+      metadata: document.metadata,
+      createdAt: new Date(document.createdAt.epochMillis).toISOString(),
+      updatedAt: new Date(document.updatedAt.epochMillis).toISOString(),
+    },
+    file,
+  }
+})
+
+// Delete document (admin only)
+const deleteDocumentHandler = base.deleteDocument.handler(requireAdmin(async ({ input }) => {
+  const documentWorkflows = container.resolve(DocumentWorkflows)
+  const result = await documentWorkflows.deleteDocument(input.params.id)
+  
+  return handleAppResult(result)
+}))
+
+export default base.router({
+  getDocuments: getDocumentsHandler,
+  getDocumentById: getDocumentByIdHandler,
+  uploadDocument: uploadDocumentHandler,
+  updateDocument: updateDocumentHandler,
+  generateDownloadLink: generateDownloadLinkHandler,
+  downloadDocumentByToken: downloadDocumentByTokenHandler,
+  deleteDocument: deleteDocumentHandler,
+})

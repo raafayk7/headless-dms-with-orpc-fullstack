@@ -1,17 +1,16 @@
-import { appPublicBase, appAuthenticatedBase } from "@contract/utils/oc.base"
+import { appPublicBase, appAuthenticatedBase, appAdminBase } from "@contract/utils/oc.base"
 import { dtoStandardSchema } from "@application/utils/validation.utils"
 import { 
   UploadDocumentDto,
   PatchDocumentDto,
   GenerateDownloadTokenDto,
-  DownloadDocumentByTokenDto
+  DownloadDocumentByTokenDto,
+  PatchDocumentDtoSchema
 } from "@application/dtos/document.dto"
 import { type } from "@orpc/contract"
 import { Schema as S } from "effect"
 
 const documentBase = appAuthenticatedBase
-const publicBase = appPublicBase
-
 // Get documents with filtering and pagination (authenticated)
 export const getDocuments = documentBase
   .route({
@@ -106,7 +105,12 @@ export const updateDocument = documentBase
     tags: ["document"],
     inputStructure: "detailed",
   })
-  .input(dtoStandardSchema(PatchDocumentDto))
+  .input(S.standardSchemaV1(S.Struct({
+    params: S.Struct({
+      id: S.String.pipe(S.pattern(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)),
+    }),
+    body: PatchDocumentDtoSchema
+  })))
   .output(S.standardSchemaV1(S.Struct({
     id: S.String,
     name: S.String,

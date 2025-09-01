@@ -8,7 +8,7 @@ import { cors } from "hono/cors"
 import { addOpenApiHandler } from "./utils/openapi.handler"
 import { addRpcHandler } from "./utils/rpc.handler"
 import { container } from "tsyringe"
-import { initAuthRouter } from "./router/auth-orpc"
+// import { initAuthRouter } from "./router/auth-orpc" // Commented out - using new ORPC structure
 import config from "@/infra/config"
 import { addOpenApiDocs } from "./utils/openapidocs.handler"
 import { wireDi } from "@/infra/di"
@@ -29,7 +29,7 @@ app.use(
 )
 
 await addOpenApiDocs(app, container)
-initAuthRouter(app, container)
+// initAuthRouter(app, container) // Commented out - using new ORPC structure
 addRpcHandler(app, container)
 await addOpenApiHandler(app, container)
 

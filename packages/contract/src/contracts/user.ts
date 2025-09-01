@@ -1,10 +1,12 @@
-import { appAuthenticatedBase } from "@contract/utils/oc.base"
+import { appAuthenticatedBase, appAdminBase } from "@contract/utils/oc.base"
 import { dtoStandardSchema } from "@application/utils/validation.utils"
 import { 
   UserFiltersDto, 
   UserPaginationParamsDto,
   UpdateUserRoleDto,
-  UpdateUserPasswordDto 
+  UpdateUserPasswordDto,
+  UpdateUserRoleDtoSchema,
+  UpdateUserPasswordDtoSchema
 } from "@application/dtos/user.dto"
 import { SuccessResponseDto } from "@application/dtos/auth.dto"
 import { type } from "@orpc/contract"
@@ -12,6 +14,7 @@ import { Schema as S } from "effect"
 import type { UserEncoded } from "@domain/user/user.entity"
 
 const userBase = appAuthenticatedBase
+
 
 // Existing whoami route
 export const whoami = userBase
@@ -87,7 +90,12 @@ export const updateUserRole = userBase
     tags: ["user"],
     inputStructure: "detailed",
   })
-  .input(dtoStandardSchema(UpdateUserRoleDto))
+  .input(S.standardSchemaV1(S.Struct({
+    params: S.Struct({
+      id: S.String.pipe(S.pattern(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)),
+    }),
+    body: UpdateUserRoleDtoSchema
+  })))
   .output(dtoStandardSchema(SuccessResponseDto))
 
 // Update user password (admin only)
@@ -99,7 +107,12 @@ export const updateUserPassword = userBase
     tags: ["user"],
     inputStructure: "detailed",
   })
-  .input(dtoStandardSchema(UpdateUserPasswordDto))
+  .input(S.standardSchemaV1(S.Struct({
+    params: S.Struct({
+      id: S.String.pipe(S.pattern(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)),
+    }),
+    body: UpdateUserPasswordDtoSchema
+  })))
   .output(dtoStandardSchema(SuccessResponseDto))
 
 // Delete user (admin only)

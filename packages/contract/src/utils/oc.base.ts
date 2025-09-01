@@ -26,3 +26,11 @@ export const appAuthenticatedBase = appPublicBase.errors({
     message: "No associated user or session",
   },
 })
+
+export const appAdminBase = appAuthenticatedBase.errors({
+  // User is authenticated but doesn't have admin role
+  Forbidden: {
+    status: 403,
+    message: "Insufficient permissions",
+  },
+})
