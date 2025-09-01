@@ -1,6 +1,6 @@
 import { authenticated } from "../utils/orpc"
 import groceryListRouter from "./grocery-list"
-import userRouter from "./user"
+import userRouter from "./user-orpc"
 
 export const router = {
   authenticated: authenticated.router({
