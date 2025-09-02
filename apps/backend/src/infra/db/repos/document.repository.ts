@@ -142,7 +142,7 @@ export class DrizzleDocumentRepository extends DocumentRepository {
     }
   }
 
-  async find(query?: DocumentFilterQuery, pagination?: { page: number; limit: number }): Promise<Result<DocumentEntity[], Error>> {
+  async find(query?: DocumentFilterQuery, pagination?: { page?: number; limit?: number }): Promise<Result<{ documents: DocumentEntity[]; total: number }, Error>> {
     try {
       const conditions = this.buildQueryConditions(query)
       const whereClause = conditions.length > 0 ? and(...conditions) : undefined
@@ -152,11 +152,11 @@ export class DrizzleDocumentRepository extends DocumentRepository {
         .from(documents)
         .where(whereClause)
         .execute()
-      const total = countResult[0]?.count || 0
+      const total = Number(countResult[0]?.count || 0)
 
       // Apply pagination
-      const page = pagination ? pagination.page : 1
-      const limit = pagination ? pagination.limit : 10
+      const page = pagination?.page || 1
+      const limit = pagination?.limit || 10
       const offset = (page - 1) * limit
 
       // Get paginated results
@@ -175,7 +175,7 @@ export class DrizzleDocumentRepository extends DocumentRepository {
         return R.Err(new Error(`Failed to transform document records: ${docResults.unwrapErr().message}`))
       }
 
-      return R.Ok(docResults.unwrap())
+      return R.Ok({ documents: docResults.unwrap(), total })
     } catch (error) {
       return R.Err(new Error(`Failed to find documents: ${error}`))
     }
@@ -403,11 +403,13 @@ export class DrizzleDocumentRepository extends DocumentRepository {
     }
     
     if (query?.metadata && Object.keys(query.metadata).length > 0) {
-      // For metadata filtering, we need to check if the metadata object contains the specified key-value pairs
-      // This is a simplified approach - in a real implementation, you might want more sophisticated JSON querying
-      Object.entries(query.metadata).forEach(([key, value]) => {
-        conditions.push(sql`${documents.metadata}->${key} = ${value}`)
-      })
+      // For metadata filtering, we use OR logic - any key-value pair should match
+      const metadataConditions = Object.entries(query.metadata).map(([key, value]) => 
+        sql`${documents.metadata}->>${key} = ${value}`
+      )
+      if (metadataConditions.length > 0) {
+        conditions.push(or(...metadataConditions))
+      }
     }
     
     if (query?.fromDate) {

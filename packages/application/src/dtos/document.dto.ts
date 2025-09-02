@@ -4,9 +4,9 @@ import { Schema as S } from "effect"
 // Upload document DTO (formdata: name, file, tags?, metadata?)
 export const UploadDocumentDtoSchema = S.Struct({
   name: S.String.pipe(S.minLength(1), S.maxLength(255)),
-  file: S.instanceOf(Buffer),
-  tags: S.optional(S.Array(S.String.pipe(S.minLength(1), S.maxLength(50)))),
-  metadata: S.optional(S.Record({ key: S.String, value: S.String })),
+  file: S.Struct({}), // Empty struct to accept any object
+  tags: S.optional(S.String), // Will be parsed as comma-separated string
+  metadata: S.optional(S.String), // Will be parsed as JSON string
 })
 
 export class UploadDocumentDto extends simpleSchemaDto(

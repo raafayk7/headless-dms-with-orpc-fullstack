@@ -14,10 +14,7 @@ export interface DocumentFilterQuery {
   maxSize?: number
 }
 
-export interface DocumentPaginationParams {
-  page: number
-  limit: number
-}
+
 
 export abstract class DocumentRepository {
   // Essential CRUD operations
@@ -32,8 +29,8 @@ export abstract class DocumentRepository {
   // Essential pagination and filtering
   abstract find(
     query?: DocumentFilterQuery, 
-    pagination?: DocumentPaginationParams
-  ): Promise<Result<DocumentEntity[], Error>>
+    pagination?: { page?: number; limit?: number }
+  ): Promise<Result<{ documents: DocumentEntity[]; total: number }, Error>>
   
   // Essential business operations
   abstract findByTags(tags: string[]): Promise<Result<DocumentEntity[], Error>>

@@ -30,11 +30,43 @@ export class DocumentWorkflows {
    */
   async uploadDocument(dto: UploadDocumentDto): Promise<ApplicationResult<DocumentEntity>> {
     try {
-      // 1. Save file to storage
+      // 1. Extract file data from multipart form-data
+      const fileData = dto.data.file as any
+      console.log("🔍 File Debug - Raw file data:", fileData)
+      console.log("🔍 File Debug - File data type:", typeof fileData)
+      console.log("🔍 File Debug - File data keys:", Object.keys(fileData || {}))
+      
+      // Convert File object to Buffer
+      let fileBuffer: Buffer
+      if (fileData.arrayBuffer) {
+        // Web API File object
+        const arrayBuffer = await fileData.arrayBuffer()
+        fileBuffer = Buffer.from(arrayBuffer)
+      } else if (fileData.buffer) {
+        // Already a Buffer
+        fileBuffer = fileData.buffer
+      } else if (Buffer.isBuffer(fileData)) {
+        // Direct Buffer
+        fileBuffer = fileData
+      } else {
+        throw new Error("Unsupported file format")
+      }
+      
+      const fileName = fileData.name || fileData.originalname || dto.data.name
+      const fileMimeType = fileData.type || fileData.mimetype || this.getMimeType(fileBuffer, fileName)
+      const fileSize = fileData.size || fileBuffer.length
+
+      console.log("🔍 File Debug - Converted buffer type:", typeof fileBuffer)
+      console.log("🔍 File Debug - Buffer is Buffer:", Buffer.isBuffer(fileBuffer))
+      console.log("🔍 File Debug - File name:", fileName)
+      console.log("🔍 File Debug - MIME type:", fileMimeType)
+      console.log("🔍 File Debug - File size:", fileSize)
+
+      // 2. Save file to storage
       const uploadResult = await this.storageService.upload(
-        dto.data.file,
+        fileBuffer,
         dto.data.name,
-        this.getMimeType(dto.data.file, dto.data.name)
+        fileMimeType
       )
 
       if (uploadResult.isErr()) {
@@ -45,17 +77,21 @@ export class DocumentWorkflows {
 
       const filePath = uploadResult.unwrap()
 
-      // 2. Create document entity
+      // 3. Parse tags and metadata from form-data strings
+      const tags = dto.data.tags ? dto.data.tags.split(',').map(t => t.trim()).filter(t => t.length > 0) : undefined
+      const metadata = dto.data.metadata ? JSON.parse(dto.data.metadata) : undefined
+
+      // 4. Create document entity
       const document = DocumentEntity.create({
         name: dto.data.name,
         filePath,
-        mimeType: this.getMimeType(dto.data.file, dto.data.name),
-        size: dto.data.file.length,
-        tags: dto.data.tags,
-        metadata: dto.data.metadata,
+        mimeType: fileMimeType,
+        size: fileSize,
+        tags,
+        metadata,
       })
 
-      // 3. Save to repository
+      // 5. Save to repository
       const saveResult = await this.documentRepository.create(document)
       
       return ApplicationResult.fromResult(saveResult)
@@ -72,7 +108,7 @@ export class DocumentWorkflows {
   async getDocuments(
     filters?: DocumentFiltersDto,
     pagination?: DocumentPaginationDto
-  ): Promise<ApplicationResult<DocumentEntity[]>> {
+  ): Promise<ApplicationResult<{ documents: DocumentEntity[]; total: number }>> {
     try {
       const filterQuery = filters ? {
         name: filters.data.name,

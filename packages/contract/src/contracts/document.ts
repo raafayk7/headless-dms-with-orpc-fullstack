@@ -20,14 +20,15 @@ export const getDocuments = documentBase
     tags: ["document"],
   })
   .input(S.standardSchemaV1(S.Struct({
-    query: S.Struct({
-      page: S.optional(S.Number.pipe(S.greaterThan(0))),
-      limit: S.optional(S.Number.pipe(S.greaterThan(0)).pipe(S.lessThanOrEqualTo(100))),
-      name: S.optional(S.String),
-      mimeType: S.optional(S.String),
-      tags: S.optional(S.String), // Comma-separated tags
-      metadata: S.optional(S.String), // JSON string
-    })
+    page: S.optional(S.NumberFromString.pipe(S.greaterThan(0))),
+    limit: S.optional(S.NumberFromString.pipe(S.greaterThan(0)).pipe(S.lessThanOrEqualTo(100))),
+    name: S.optional(S.String),
+    mimeType: S.optional(S.String),
+    tags: S.optional(S.String), // Comma-separated tags
+    metadata: S.optional(S.String), // JSON string or key=value format
+    // Individual metadata key-value pairs for easier querying
+    metadataKey: S.optional(S.String), // Single metadata key
+    metadataValue: S.optional(S.String), // Single metadata value
   })))
   .output(S.standardSchemaV1(S.Struct({
     documents: S.Array(S.Struct({

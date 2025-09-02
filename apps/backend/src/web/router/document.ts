@@ -10,23 +10,45 @@ const base = authenticated.document
 const getDocumentsHandler = base.getDocuments.handler(async ({ input }) => {
   const documentWorkflows = container.resolve(DocumentWorkflows)
   // Transform query to match expected DTO format
+  let metadata: Record<string, string> | undefined = undefined
+  
+  // Handle metadata in different formats
+  if (input.metadata) {
+    try {
+      metadata = JSON.parse(input.metadata)
+    } catch {
+      // If not valid JSON, treat as key=value format
+      const keyValuePairs = input.metadata.split(',')
+      metadata = {}
+      keyValuePairs.forEach(pair => {
+        const [key, value] = pair.split('=')
+        if (key && value) {
+          metadata![key.trim()] = value.trim()
+        }
+      })
+    }
+  } else if (input.metadataKey && input.metadataValue) {
+    // Handle individual key-value pair
+    metadata = { [input.metadataKey]: input.metadataValue }
+  }
+  
   const filters = {
-    name: input.query.name,
-    mimeType: input.query.mimeType,
-    tags: input.query.tags ? input.query.tags.split(',').map(t => t.trim()) : undefined,
-    metadata: input.query.metadata ? JSON.parse(input.query.metadata) : undefined,
+    name: input.name,
+    mimeType: input.mimeType,
+    tags: input.tags ? input.tags.split(',').map(t => t.trim()) : undefined,
+    metadata,
   }
   
   const result = await documentWorkflows.getDocuments(
     { data: filters },
-    { data: { page: input.query.page || 1, limit: input.query.limit || 10 } }
+    { data: { page: input.page || 1, limit: input.limit || 10 } }
   )
   
   if (result.isErr()) {
     return handleAppResult(result)
   }
   
-  const documents = result.unwrap()
+  const { documents, total } = result.unwrap()
   const serializedDocuments = documents.map(doc => ({
     id: doc.id,
     name: doc.name,
@@ -42,10 +64,10 @@ const getDocumentsHandler = base.getDocuments.handler(async ({ input }) => {
   return {
     documents: serializedDocuments,
     pagination: {
-      page: input.query.page || 1,
-      limit: input.query.limit || 10,
-      total: documents.length,
-      totalPages: Math.ceil(documents.length / (input.query.limit || 10)),
+      page: input.page || 1,
+      limit: input.limit || 10,
+      total,
+      totalPages: Math.ceil(total / (input.limit || 10)),
     }
   }
 })
