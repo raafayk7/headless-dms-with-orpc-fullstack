@@ -143,33 +143,7 @@ export const generateDownloadLink = documentBase
     expiresAt: S.Date,
   })))
 
-// Download document by token (authenticated - not admin protected)
-export const downloadDocumentByToken = documentBase
-  .route({
-    method: "GET",
-    path: "/document/download",
-    summary: "Download document by token (authenticated)",
-    tags: ["document"],
-  })
-  .input(S.standardSchemaV1(S.Struct({
-    query: S.Struct({
-      token: S.String.pipe(S.minLength(1)),
-    })
-  })))
-  .output(S.standardSchemaV1(S.Struct({
-    document: S.Struct({
-      id: S.String,
-      name: S.String,
-      filePath: S.String,
-      mimeType: S.String,
-      size: S.Number,
-      tags: S.optional(S.Array(S.String)),
-      metadata: S.optional(S.Record({ key: S.String, value: S.String })),
-      createdAt: S.Date,
-      updatedAt: S.Date,
-    }),
-    file: S.instanceOf(Buffer),
-  })))
+
 
 // Delete document (admin only)
 export const deleteDocument = documentBase
@@ -196,6 +170,5 @@ export default {
   uploadDocument,
   updateDocument,
   generateDownloadLink,
-  downloadDocumentByToken,
   deleteDocument,
 }

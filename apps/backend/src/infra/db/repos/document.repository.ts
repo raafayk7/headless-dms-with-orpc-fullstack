@@ -304,13 +304,38 @@ export class DrizzleDocumentRepository extends DocumentRepository {
     updates: DocumentUpdateType
   ): Promise<RepoResult<DocumentEntity, DocumentNotFoundError>> {
     try {
+      // Build the set object with only provided fields
+      const setData: any = {
+        updatedAt: new Date(),
+      }
+
+      // Only include fields that are actually provided
+      if (updates.name !== undefined) {
+        setData.name = updates.name
+      }
+      
+      if (updates.filePath !== undefined) {
+        setData.filePath = updates.filePath
+      }
+      
+      if (updates.mimeType !== undefined) {
+        setData.mimeType = updates.mimeType
+      }
+      
+      if (updates.size !== undefined) {
+        setData.size = updates.size
+      }
+      
+      if (updates.tags !== undefined) {
+        setData.tags = [...updates.tags]
+      }
+      
+      if (updates.metadata !== undefined) {
+        setData.metadata = { ...updates.metadata }
+      }
+
       const [updatedDoc] = await this.db.update(documents)
-        .set({
-          ...updates,
-          tags: updates.tags ? [...updates.tags] : [],
-          metadata: updates.metadata ? { ...updates.metadata } : {},
-          updatedAt: new Date(),
-        })
+        .set(setData)
         .where(eq(documents.id, id))
         .returning()
 

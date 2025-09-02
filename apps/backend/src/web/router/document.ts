@@ -3,6 +3,7 @@ import { container } from "tsyringe"
 import { authenticated } from "../utils/orpc"
 import { handleAppResult } from "../utils/result-handler"
 import { requireAdmin } from "../utils/rbac"
+import { getFileStreamingOptions, getContentDisposition, getCacheHeaders } from "../utils/file-streaming.utils"
 
 const base = authenticated.document
 
@@ -154,36 +155,12 @@ const generateDownloadLinkHandler = base.generateDownloadLink.handler(async ({ i
   const expiresAt = new Date(Date.now() + 5 * 60 * 1000) // 5 minutes from now
   
   return {
-    downloadUrl: `/api/document/download?token=${token}`,
+    downloadUrl: `/api/files/download?token=${token}`,
     expiresAt: expiresAt.toISOString(),
   }
 })
 
-// Download document by token (authenticated - not admin protected)
-const downloadDocumentByTokenHandler = base.downloadDocumentByToken.handler(async ({ input }) => {
-  const documentWorkflows = container.resolve(DocumentWorkflows)
-  const result = await documentWorkflows.downloadDocumentByToken(input.query.token)
-  
-  if (result.isErr()) {
-    return handleAppResult(result)
-  }
-  
-  const { document, file } = result.unwrap()
-  return {
-    document: {
-      id: document.id,
-      name: document.name,
-      mimeType: document.mimeType,
-      filePath: document.filePath,
-      size: document.size,
-      tags: document.tags,
-      metadata: document.metadata,
-      createdAt: new Date(document.createdAt.epochMillis).toISOString(),
-      updatedAt: new Date(document.updatedAt.epochMillis).toISOString(),
-    },
-    file,
-  }
-})
+
 
 // Delete document (admin only)
 const deleteDocumentHandler = base.deleteDocument.handler(requireAdmin(async ({ input }) => {
@@ -199,6 +176,5 @@ export default base.router({
   uploadDocument: uploadDocumentHandler,
   updateDocument: updateDocumentHandler,
   generateDownloadLink: generateDownloadLinkHandler,
-  downloadDocumentByToken: downloadDocumentByTokenHandler,
   deleteDocument: deleteDocumentHandler,
 })

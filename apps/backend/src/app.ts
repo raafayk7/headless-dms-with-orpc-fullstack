@@ -12,6 +12,9 @@ import config from "@/infra/config"
 import { addOpenApiDocs } from "./web/utils/openapidocs.handler"
 import { wireDi } from "@/infra/di"
 import { CORS_TRUSTED_ORIGINS } from "@/constants"
+import { DocumentWorkflows } from "@application/workflows"
+import { getFileStreamingOptions, getContentDisposition, getCacheHeaders } from "./web/utils/file-streaming.utils"
+
 
 // =============================================================================
 // BOOTSTRAP FUNCTIONS
@@ -45,6 +48,53 @@ function initializeDI() {
   console.log("✅ Dependency injection initialized")
 }
 
+function addFileDownloadRoute(app: Hono, container: any) {
+  // Direct file download route that bypasses ORPC validation
+  app.get("/api/files/download", async (c) => {
+    try {
+      const token = c.req.query("token")
+      
+      if (!token) {
+        return c.json({ error: "Token is required" }, 400)
+      }
+      
+      const documentWorkflows = container.resolve(DocumentWorkflows)
+      const result = await documentWorkflows.downloadDocumentByToken(token)
+      
+      if (result.isErr()) {
+        const error = result.unwrapErr()
+        return c.json({ error: error.message }, 404)
+      }
+      
+      const { document, file } = result.unwrap()
+      
+      // Get enhanced file streaming options
+      const streamingOptions = getFileStreamingOptions(document.name, document.mimeType, file)
+      const contentDisposition = getContentDisposition(document.name, streamingOptions.mimeType)
+      const cacheHeaders = getCacheHeaders(streamingOptions.mimeType)
+      
+      // Return streaming file response with proper headers
+      return new Response(streamingOptions.fileBuffer, {
+        status: 200,
+        headers: {
+          'Content-Type': streamingOptions.mimeType,
+          'Content-Length': streamingOptions.fileSize.toString(),
+          'Content-Disposition': contentDisposition,
+          'Accept-Ranges': 'bytes',
+          'X-Content-Type-Options': 'nosniff',
+          'X-Frame-Options': 'DENY',
+          ...cacheHeaders,
+        },
+      })
+    } catch (error) {
+      console.error("File download error:", error)
+      return c.json({ error: "Internal server error" }, 500)
+    }
+  })
+}
+
+
+
 function createServer(): Hono {
   console.log("🚀 Creating Hono server...")
   
@@ -61,6 +111,9 @@ function createServer(): Hono {
       exposeHeaders: ["Set-Cookie"],
     }),
   )
+  
+  // Add direct file download route FIRST (before ORPC to avoid conflicts)
+  addFileDownloadRoute(app, container)
   
   // Add route handlers
   addRpcHandler(app, container)

@@ -154,33 +154,27 @@ export class DocumentWorkflows {
     dto: PatchDocumentDto
   ): Promise<ApplicationResult<DocumentEntity>> {
     try {
-      // Get existing document
-      const documentResult = await this.documentRepository.findById(id as DocumentType["id"])
-      if (documentResult.isErr()) {
-        return ApplicationResult.fromResult(documentResult)
-      }
-
-      const document = documentResult.unwrap()
-
-      // Apply patches
-      let updatedDocument = document
-
+      // Build updates object with only provided fields
+      const updates: any = {}
+      
       if (dto.data.name !== undefined) {
-        updatedDocument = updatedDocument.updateName(dto.data.name)
+        updates.name = dto.data.name
       }
-
+      
       if (dto.data.tags !== undefined) {
-        // Replace tags (not add to existing)
-        updatedDocument = updatedDocument.updateTags([...dto.data.tags])
+        updates.tags = dto.data.tags
       }
-
+      
       if (dto.data.metadata !== undefined) {
-        // Replace metadata (not add to existing)
-        updatedDocument = updatedDocument.updateMetadata(dto.data.metadata)
+        updates.metadata = dto.data.metadata
       }
 
-      // Save updated document
-      const saveResult = await this.documentRepository.update(updatedDocument)
+      // Use updateDocumentFields for direct field updates (same pattern as user workflow)
+      const saveResult = await this.documentRepository.updateDocumentFields(
+        id as DocumentType["id"], 
+        updates
+      )
+      
       return ApplicationResult.fromResult(saveResult)
     } catch (error) {
       return ApplicationResult.fromResult(
