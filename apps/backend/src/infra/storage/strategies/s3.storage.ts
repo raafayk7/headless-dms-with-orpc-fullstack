@@ -13,18 +13,22 @@ export class S3StorageStrategy implements IStorageStrategy {
   constructor() {
     const { s3 } = storageConfig
     
-    if (!s3.bucketName || !s3.accessKeyId || !s3.secretAccessKey) {
-      throw new Error("S3 configuration is incomplete. Please set S3_BUCKET_NAME, S3_ACCESS_KEY_ID, and S3_SECRET_ACCESS_KEY")
+    if (!s3.bucketName) {
+      throw new Error("S3 configuration is incomplete. Please set S3_BUCKET_NAME")
     }
 
     this.bucketName = s3.bucketName
 
     this.s3Client = new S3Client({
       region: s3.region,
-      credentials: {
-        accessKeyId: s3.accessKeyId,
-        secretAccessKey: s3.secretAccessKey,
-      },
+      // AWS SDK will automatically use AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_DEFAULT_REGION
+      // from environment variables if credentials are not explicitly provided
+      ...(s3.accessKeyId && s3.secretAccessKey && {
+        credentials: {
+          accessKeyId: s3.accessKeyId,
+          secretAccessKey: s3.secretAccessKey,
+        },
+      }),
       ...(s3.endpoint && {
         endpoint: s3.endpoint,
         forcePathStyle: true, // Required for LocalStack

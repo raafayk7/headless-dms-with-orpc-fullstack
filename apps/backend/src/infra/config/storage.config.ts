@@ -10,11 +10,11 @@ const STORAGE_BACKEND = env
 
 const STORAGE_PATH = env.get("STORAGE_PATH").default("./uploads").asString()
 
-// S3 Configuration
+// S3 Configuration - Using standard AWS environment variables
 const S3_BUCKET_NAME = env.get("S3_BUCKET_NAME").asString()
-const S3_REGION = env.get("S3_REGION").default("us-east-1").asString()
-const S3_ACCESS_KEY_ID = env.get("S3_ACCESS_KEY_ID").asString()
-const S3_SECRET_ACCESS_KEY = env.get("S3_SECRET_ACCESS_KEY").asString()
+const S3_REGION = env.get("AWS_DEFAULT_REGION").default("us-east-1").asString()
+const S3_ACCESS_KEY_ID = env.get("AWS_ACCESS_KEY_ID").asString()
+const S3_SECRET_ACCESS_KEY = env.get("AWS_SECRET_ACCESS_KEY").asString()
 const S3_ENDPOINT = env.get("S3_ENDPOINT").asString()
 
 const storageConfig = {
