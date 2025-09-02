@@ -96,22 +96,7 @@ export const updateUserRole = userBase
   })))
   .output(dtoStandardSchema(SuccessResponseDto))
 
-// Update user password (admin only)
-export const updateUserPassword = userBase
-  .route({
-    method: "PATCH",
-    path: "/user/:id/password",
-    summary: "Update user password (admin only)",
-    tags: ["user"],
-    inputStructure: "detailed",
-  })
-  .input(S.standardSchemaV1(S.Struct({
-    params: S.Struct({
-      id: S.String.pipe(S.pattern(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)),
-    }),
-    body: UpdateUserPasswordDtoSchema
-  })))
-  .output(dtoStandardSchema(SuccessResponseDto))
+
 
 // Delete user (admin only)
 export const deleteUser = userBase
@@ -134,6 +119,5 @@ export default {
   getUsers,
   getUserById,
   updateUserRole,
-  updateUserPassword,
   deleteUser,
 }

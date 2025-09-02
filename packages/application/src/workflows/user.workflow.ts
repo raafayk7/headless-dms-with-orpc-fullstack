@@ -1,7 +1,6 @@
 import {
   RegisterUserDto,
   LoginUserDto,
-  UpdateUserPasswordDto,
   UpdateUserRoleDto,
   UserFiltersDto,
   UserPaginationParamsDto,
@@ -129,16 +128,7 @@ export class UserWorkflows {
     }
   }
 
-  async updateUserPassword(
-    userId: string,
-    dto: UpdateUserPasswordDto
-  ): Promise<ApplicationResult<{ success: boolean; message: string }>> {
-    // Password updates are now handled by Better-Auth
-    // This method is kept for API compatibility but should redirect to Better-Auth
-    return ApplicationResult.fromResult(
-      Result.Err(new Error("Password updates are handled by Better-Auth. Use /auth/change-password endpoint."))
-    )
-  }
+
 
   async updateUserRole(
     targetUserId: string,
@@ -147,18 +137,11 @@ export class UserWorkflows {
     try {
       // Convert string ID to branded type - use type assertion for now
       const brandedUserId = targetUserId as any
-      const userResult = await this.userRepository.findById(brandedUserId)
-      if (userResult.isErr()) {
-        return ApplicationResult.fromResult(
-          Result.Err(new Error(`User with id ${targetUserId} not found`))
-        )
-      }
-
-      const user = userResult.unwrap()
-
-      // Update user role
-      const updatedUser = user.updateRole(dto.data.newRole)
-      const saveResult = await this.userRepository.update(updatedUser)
+      
+      // Use updateUserFields for simpler partial update
+      const saveResult = await this.userRepository.updateUserFields(brandedUserId, {
+        role: dto.data.newRole
+      })
 
       return ApplicationResult.fromResult(
         saveResult.map(() => ({
@@ -177,14 +160,8 @@ export class UserWorkflows {
     try {
       // Convert string ID to branded type - use type assertion for now
       const brandedUserId = targetUserId as any
-      const userResult = await this.userRepository.findById(brandedUserId)
-      if (userResult.isErr()) {
-        return ApplicationResult.fromResult(
-          Result.Err(new Error(`User with id ${targetUserId} not found`))
-        )
-      }
-
-      // Delete user
+      
+      // Delete user directly - repository handles "not found" case
       const deleteResult = await this.userRepository.delete(brandedUserId)
 
       return ApplicationResult.fromResult(

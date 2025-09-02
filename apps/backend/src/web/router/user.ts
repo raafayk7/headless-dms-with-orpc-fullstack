@@ -89,13 +89,7 @@ const updateUserRoleHandler = base.updateUserRole.handler(requireAdmin(async ({ 
   return handleAppResult(result)
 }))
 
-// Update user password (admin only)
-const updateUserPasswordHandler = base.updateUserPassword.handler(requireAdmin(async ({ input }) => {
-  const userWorkflows = container.resolve(UserWorkflows)
-  const result = await userWorkflows.updateUserPassword(input.params.id, { data: input.body })
-  
-  return handleAppResult(result)
-}))
+
 
 // Delete user (admin only)
 const deleteUserHandler = base.deleteUser.handler(requireAdmin(async ({ input }) => {
@@ -110,6 +104,5 @@ export default base.router({
   getUsers: getUsersHandler,
   getUserById: getUserByIdHandler,
   updateUserRole: updateUserRoleHandler,
-  updateUserPassword: updateUserPasswordHandler,
   deleteUser: deleteUserHandler,
 })
