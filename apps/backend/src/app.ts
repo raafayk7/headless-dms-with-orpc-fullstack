@@ -67,6 +67,10 @@ function createServer(): Hono {
   addOpenApiDocs(app, container)
   addOpenApiHandler(app, container)
   
+  // Add Better-Auth routes
+  const { initAuthRouter } = require("./web/router/auth")
+  initAuthRouter(app, container)
+  
   console.log("✅ Hono server created successfully")
   return app
 }

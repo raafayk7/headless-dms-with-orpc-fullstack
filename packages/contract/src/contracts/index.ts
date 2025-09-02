@@ -1,13 +1,12 @@
 import type { ContractRouterClient } from "@orpc/contract"
 // import groceryListContract from "./grocery-list"
 // import userContract from "./user-orpc"
-import authContract from "./auth"
 import documentContract from "./document"
 import userContract from "./user"
 
 export const CONTRACT = {
   public: {
-    auth: authContract,
+    // Auth is now handled directly by Better-Auth, not through oRPC contracts
   },
   authenticated: {
     //user: userContract,

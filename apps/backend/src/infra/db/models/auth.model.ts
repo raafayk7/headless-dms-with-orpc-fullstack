@@ -70,7 +70,6 @@ export const users = pgTable("users", {
   
   name: text("name").notNull(), // Better-auth requirement
   email: text("email").notNull().unique(),
-  passwordHash: text("password_hash").notNull(),
   role: text("role", { enum: ["user", "admin"] }).notNull().default("user"),
   emailVerified: boolean("email_verified").notNull().default(false),
 })
@@ -85,4 +84,45 @@ export const documents = pgTable("documents", {
   size: integer("size").notNull(), // Using integer for file size in bytes
   tags: text("tags").array().default(sql`ARRAY[]::text[]`),
   metadata: jsonb("metadata").$type<Record<string, string>>().default({}),
+})
+
+
+export const session = pgTable("session", {
+  ...getBaseColumns(),
+
+  expiresAt: timestamp("expires_at").notNull(),
+  token: text("token").notNull().unique(),
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  userId: uuid("user_id")
+    .$type<UserId>()
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+})
+
+export const account = pgTable("account", {
+  ...getBaseColumns(),
+
+  accountId: text("account_id").notNull(),
+  providerId: text("provider_id").notNull(),
+  userId: uuid("user_id")
+    .$type<UserId>()
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  accessToken: text("access_token"),
+  refreshToken: text("refresh_token"),
+  idToken: text("id_token"),
+  accessTokenExpiresAt: timestamp("access_token_expires_at"),
+  refreshTokenExpiresAt: timestamp("refresh_token_expires_at"),
+  scope: text("scope"),
+  password: text("password"),
+})
+
+export const verification = pgTable("verification", {
+  id: getPrimaryKeyCol(),
+  identifier: text("identifier").notNull(),
+  value: text("value").notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at"),
+  updatedAt: timestamp("updated_at"),
 })

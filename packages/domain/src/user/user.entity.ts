@@ -15,7 +15,6 @@ export const UserSchema = defineEntityStruct("UserId", {
     S.pattern(/^[^\s@]+@[^\s@]+\.[^\s@]+$/),
     S.brand("Email")
   ),
-  passwordHash: S.String.pipe(S.minLength(1)),
   role: S.Union(
     S.Literal("user"),
     S.Literal("admin")
@@ -72,7 +71,6 @@ export class UserEntity extends BaseEntity implements UserType {
 
   readonly name: UserType["name"]
   readonly email: UserType["email"]
-  readonly passwordHash: string
   readonly role: UserType["role"]
   readonly emailVerified: UserType["emailVerified"]
 
@@ -81,7 +79,6 @@ export class UserEntity extends BaseEntity implements UserType {
     this.id = data.id
     this.name = data.name
     this.email = data.email
-    this.passwordHash = data.passwordHash
     this.role = data.role
     this.emailVerified = data.emailVerified
   }
@@ -95,14 +92,9 @@ export class UserEntity extends BaseEntity implements UserType {
   }
 
   // Factory method for creating new users
-  static create(data: NewUserType, passwordHash: string): UserEntity {
+  static create(data: NewUserType): UserEntity {
     // Validate the input data using the schema
     const validatedData = S.decodeUnknownSync(NewUserSchema)(data)
-    
-    // Additional validation for password hash
-    if (!passwordHash || passwordHash.trim().length === 0) {
-      throw new Error("Password hash cannot be empty")
-    }
     
     // Additional validation for role
     if (!["user", "admin"].includes(validatedData.role)) {
@@ -125,7 +117,6 @@ export class UserEntity extends BaseEntity implements UserType {
       ...UserSchema.baseInit(),
       name: nameValidation.right.name,
       email: emailValidation.right.email,
-      passwordHash,
       role: validatedData.role,
       emailVerified: false, // Default to false for new users
     }
@@ -137,7 +128,6 @@ export class UserEntity extends BaseEntity implements UserType {
     id: string
     name: string
     email: string
-    passwordHash: string
     role: string
     emailVerified: boolean
     createdAt: Date
@@ -148,7 +138,6 @@ export class UserEntity extends BaseEntity implements UserType {
       id: UserIdSchema.new(), // Use new() instead of fromTrusted
       name: data.name as UserType["name"],
       email: data.email as UserType["email"],
-      passwordHash: data.passwordHash,
       role: data.role as UserType["role"],
       emailVerified: data.emailVerified,
       createdAt: data.createdAt as any, // Type assertion for now
@@ -213,14 +202,7 @@ export class UserEntity extends BaseEntity implements UserType {
     return new UserEntity(updatedData)
   }
 
-  updatePassword(newPasswordHash: string): UserEntity {
-    const updatedData: UserType = {
-      ...this,
-      passwordHash: newPasswordHash,
-      updatedAt: new Date() as any, // Type assertion for now
-    }
-    return new UserEntity(updatedData)
-  }
+  // Password management is now handled by Better-Auth in the account table
 
   // New method to verify email
   verifyEmail(): UserEntity {
@@ -241,7 +223,6 @@ export class UserEntity extends BaseEntity implements UserType {
     id: string
     name: string
     email: string
-    passwordHash: string
     role: string
     emailVerified: boolean
     createdAt: Date
@@ -251,7 +232,6 @@ export class UserEntity extends BaseEntity implements UserType {
       id: this.id,
       name: this.name,
       email: this.email,
-      passwordHash: this.passwordHash,
       role: this.role,
       emailVerified: this.emailVerified,
       createdAt: this.createdAt as any, // Type assertion for now

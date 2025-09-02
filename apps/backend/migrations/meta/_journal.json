@@ -5,22 +5,15 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1756578768194,
-      "tag": "0000_init",
+      "when": 1756801497339,
+      "tag": "0000_initial-migration",
       "breakpoints": true
     },
     {
       "idx": 1,
       "version": "7",
-      "when": 1756579854876,
-      "tag": "0001_init",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1756655500840,
-      "tag": "0002_tables-with-auth",
+      "when": 1756801901083,
+      "tag": "0001_remove-password-hash",
       "breakpoints": true
     }
   ]

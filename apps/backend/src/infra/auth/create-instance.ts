@@ -34,6 +34,37 @@ export const createBetterAuthInstance = <T extends Record<string, any>>(
       schema,
     }),
 
+    // Configure user schema to match your domain entities
+    user: {
+      modelName: "users", // Use your custom table name
+      fields: {
+        name: "name",
+        email: "email", 
+        emailVerified: "emailVerified",
+        image: "image", // Optional field
+      },
+      additionalFields: {
+        role: {
+          type: "string",
+          required: true,
+          defaultValue: "user",
+          input: true, // Allow role to be set during signup
+        },
+      },
+    },
+
+    // Configure session schema to match your custom table
+    session: {
+      modelName: "session", // Use your custom table name
+      fields: {
+        expiresAt: "expiresAt",
+        token: "token",
+        ipAddress: "ipAddress",
+        userAgent: "userAgent",
+        userId: "userId",
+      },
+    },
+
     emailAndPassword: {
       enabled: true,
       password: {
@@ -51,11 +82,11 @@ export const createBetterAuthInstance = <T extends Record<string, any>>(
     // TODO: add redis for shared session cache storage
     // secondaryStorage: redisThing,
 
-    session: {
-      cookieCache: { enabled: true, maxAge: 60 * 5 }, // check session in database every 5 minutes
-      expiresIn: 60 * 60, // 1 hour (changed from 7 days to meet DMS requirement)
-      updateAge: 60 * 60, // update session every hour (changed from daily to match expiry)
-    },
+    // session: {
+    //   cookieCache: { enabled: true, maxAge: 60 * 5 }, // check session in database every 5 minutes
+    //   expiresIn: 60 * 60, // 1 hour (changed from 7 days to meet DMS requirement)
+    //   updateAge: 60 * 60, // update session every hour (changed from daily to match expiry)
+    // },
 
     advanced: {
       database: { generateId: false }, // generate uuids via drizzle
@@ -64,6 +95,11 @@ export const createBetterAuthInstance = <T extends Record<string, any>>(
     // https://www.better-auth.com/docs/concepts/hooks#example-enforce-email-domain-restriction
     hooks: {
       before: beforeHooks,
+      // TODO: Add after hooks once Better-Auth API is confirmed
+      // after: {
+      //   createUser: async (user) => { ... },
+      //   signIn: async (user) => { ... },
+      // },
     },
   })
 

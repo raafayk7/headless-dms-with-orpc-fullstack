@@ -29,20 +29,14 @@ export class UserWorkflows {
         )
       }
 
-      // Hash password
-      const saltRounds = 12
-      const passwordHash = await bcrypt.hash(dto.data.password, saltRounds)
-
       // Create user entity using the name from DTO
-      const user = UserEntity.create(
-        {
-          name: dto.data.name,
-          email: dto.data.email,
-          password: dto.data.password, // Include password for validation
-          role: dto.data.role,
-        },
-        passwordHash
-      )
+      // Password will be handled by Better-Auth in the account table
+      const user = UserEntity.create({
+        name: dto.data.name,
+        email: dto.data.email,
+        password: dto.data.password, // Include password for validation
+        role: dto.data.role,
+      })
 
       // Save to repository
       const saveResult = await this.userRepository.create(user)
@@ -72,15 +66,8 @@ export class UserWorkflows {
 
       const user = userResult.unwrap()
 
-      // Verify password
-      const isValidPassword = await bcrypt.compare(dto.data.password, user.passwordHash)
-      if (!isValidPassword) {
-        return ApplicationResult.fromResult(
-          Result.Err(new Error("Invalid password"))
-        )
-      }
-
-      // Return user data - HTTP layer will handle Better-Auth session creation
+      // Password verification is now handled by Better-Auth
+      // This method is kept for compatibility but Better-Auth handles authentication
       return ApplicationResult.fromResult(
         Result.Ok(user)
       )
@@ -133,45 +120,11 @@ export class UserWorkflows {
     userId: string,
     dto: UpdateUserPasswordDto
   ): Promise<ApplicationResult<{ success: boolean; message: string }>> {
-    try {
-      // Convert string ID to branded type - use type assertion for now
-      const brandedUserId = userId as any
-      const userResult = await this.userRepository.findById(brandedUserId)
-      if (userResult.isErr()) {
-        return ApplicationResult.fromResult(
-          Result.Err(new Error(`User with id ${userId} not found`))
-        )
-      }
-
-      const user = userResult.unwrap()
-
-      // Verify current password
-      const isValidCurrentPassword = await bcrypt.compare(dto.data.currentPassword, user.passwordHash)
-      if (!isValidCurrentPassword) {
-        return ApplicationResult.fromResult(
-          Result.Err(new Error("Current password is incorrect"))
-        )
-      }
-
-      // Hash new password
-      const saltRounds = 12
-      const newPasswordHash = await bcrypt.hash(dto.data.newPassword, saltRounds)
-
-      // Update user with new password
-      const updatedUser = user.updatePassword(newPasswordHash)
-      const saveResult = await this.userRepository.update(updatedUser)
-
-      return ApplicationResult.fromResult(
-        saveResult.map(() => ({
-          success: true,
-          message: "Password updated successfully"
-        }))
-      )
-    } catch (error) {
-      return ApplicationResult.fromResult(
-        Result.Err(error instanceof Error ? error : new Error("Failed to update password"))
-      )
-    }
+    // Password updates are now handled by Better-Auth
+    // This method is kept for API compatibility but should redirect to Better-Auth
+    return ApplicationResult.fromResult(
+      Result.Err(new Error("Password updates are handled by Better-Auth. Use /auth/change-password endpoint."))
+    )
   }
 
   async updateUserRole(
