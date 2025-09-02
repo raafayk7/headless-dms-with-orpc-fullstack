@@ -14,16 +14,32 @@ const whoamiHandler = base.whoami.handler(async ({ context }) => {
 // Get users with filtering and pagination (admin only)
 const getUsersHandler = base.getUsers.handler(requireAdmin(async ({ input }) => {
   const userWorkflows = container.resolve(UserWorkflows)
+  
+  // Handle optional query parameters
+  const page = input.page || 1
+  const limit = input.limit || 10
+  const query = {
+    email: input.email,
+    role: input.role,
+  }
+  
+  console.log("🔍 Router Debug - Input:", input)
+  console.log("🔍 Router Debug - Processed query:", query)
+  console.log("🔍 Router Debug - Page:", page, "Limit:", limit)
+  
   const result = await userWorkflows.getUsers(
-    { data: input.query },
-    { data: { page: input.query.page || 1, limit: input.query.limit || 10 } }
+    { data: query },
+    { data: { page, limit } }
   )
   
   if (result.isErr()) {
+    console.error("🔍 Router Debug - Error:", result.unwrapErr())
     return handleAppResult(result)
   }
   
-  const users = result.unwrap()
+  const { users, total } = result.unwrap()
+  console.log("🔍 Router Debug - Users count:", users.length, "Total:", total)
+  
   const serializedUsers = users.map(user => ({
     id: user.id,
     email: user.email,
@@ -32,15 +48,18 @@ const getUsersHandler = base.getUsers.handler(requireAdmin(async ({ input }) => 
     updatedAt: new Date(user.updatedAt.epochMillis).toISOString(),
   }))
   
-  return {
+  const response = {
     users: serializedUsers,
     pagination: {
-      page: input.query.page || 1,
-      limit: input.query.limit || 10,
-      total: users.length,
-      totalPages: Math.ceil(users.length / (input.query.limit || 10)),
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
     }
   }
+  
+  console.log("🔍 Router Debug - Response:", JSON.stringify(response, null, 2))
+  return response
 }))
 
 // Get user by ID (admin only)

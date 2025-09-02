@@ -19,7 +19,7 @@ export abstract class UserRepository {
   abstract findByEmail(email: string): Promise<RepoResult<UserEntity, UserNotFoundError>>
   
   // Essential pagination and filtering
-  abstract find(query?: UserFilterQuery, pagination?: { page?: number; limit?: number }): Promise<Result<UserEntity[], Error>>
+  abstract find(query?: UserFilterQuery, pagination?: { page?: number; limit?: number }): Promise<Result<{ users: UserEntity[]; total: number }, Error>>
   
   // Essential business operations
   abstract findByRole(role: "user" | "admin"): Promise<Result<UserEntity[], Error>>
@@ -32,9 +32,5 @@ export abstract class UserRepository {
     updates: UserUpdateType
   ): Promise<RepoResult<UserEntity, UserNotFoundError>>
   
-  // Authentication operations
-  abstract findByEmailAndPassword(
-    email: string, 
-    passwordHash: string
-  ): Promise<RepoResult<UserEntity, UserNotFoundError>>
+  // Authentication operations are now handled by Better-Auth
 }

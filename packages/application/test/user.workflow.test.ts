@@ -73,9 +73,7 @@ class MockUserRepository implements UserRepository {
     return Result.Err(new UserNotFoundError("unknown" as any))
   }
 
-  async findByEmailAndPassword() {
-    return Result.Err(new UserNotFoundError("unknown" as any))
-  }
+
 }
 
 describe("UserWorkflows", () => {

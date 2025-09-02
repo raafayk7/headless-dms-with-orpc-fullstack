@@ -81,8 +81,11 @@ export class UserWorkflows {
   async getUsers(
     filters?: UserFiltersDto,
     pagination?: UserPaginationParamsDto
-  ): Promise<ApplicationResult<UserEntity[]>> {
+  ): Promise<ApplicationResult<{ users: UserEntity[]; total: number }>> {
     try {
+      console.log("🔍 Workflow Debug - Filters:", filters)
+      console.log("🔍 Workflow Debug - Pagination:", pagination)
+      
       const filterQuery = filters ? {
         email: filters.data.email,
         role: filters.data.role,
@@ -93,10 +96,20 @@ export class UserWorkflows {
         limit: pagination.data.limit,
       } : undefined
 
-      const usersResult = await this.userRepository.find(filterQuery, paginationParams)
+      console.log("🔍 Workflow Debug - Filter query:", filterQuery)
+      console.log("🔍 Workflow Debug - Pagination params:", paginationParams)
+
+      const result = await this.userRepository.find(filterQuery, paginationParams)
       
-      return ApplicationResult.fromResult(usersResult)
+      if (result.isErr()) {
+        console.error("🔍 Workflow Debug - Repository error:", result.unwrapErr())
+      } else {
+        console.log("🔍 Workflow Debug - Repository success:", result.unwrap())
+      }
+      
+      return ApplicationResult.fromResult(result)
     } catch (error) {
+      console.error("🔍 Workflow Debug - Catch error:", error)
       return ApplicationResult.fromResult(
         Result.Err(error instanceof Error ? error : new Error("Failed to get users"))
       )

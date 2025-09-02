@@ -36,20 +36,18 @@ export const getUsers = userBase
     tags: ["user"],
   })
   .input(S.standardSchemaV1(S.Struct({
-    query: S.Struct({
-      page: S.optional(S.Number.pipe(S.greaterThan(0))),
-      limit: S.optional(S.Number.pipe(S.greaterThan(0)).pipe(S.lessThanOrEqualTo(100))),
-      email: S.optional(S.String),
-      role: S.optional(S.Literal("user", "admin")),
-    })
+    page: S.optional(S.NumberFromString.pipe(S.greaterThan(0))),
+    limit: S.optional(S.NumberFromString.pipe(S.greaterThan(0)).pipe(S.lessThanOrEqualTo(100))),
+    email: S.optional(S.String),
+    role: S.optional(S.Literal("user", "admin")),
   })))
   .output(S.standardSchemaV1(S.Struct({
     users: S.Array(S.Struct({
       id: S.String,
       email: S.String,
       role: S.Literal("user", "admin"),
-      createdAt: S.Date,
-      updatedAt: S.Date,
+      createdAt: S.String,
+      updatedAt: S.String,
     })),
     pagination: S.Struct({
       page: S.Number,
@@ -77,8 +75,8 @@ export const getUserById = userBase
     id: S.String,
     email: S.String,
     role: S.Literal("user", "admin"),
-    createdAt: S.Date,
-    updatedAt: S.Date,
+    createdAt: S.String,
+    updatedAt: S.String,
   })))
 
 // Update user role (admin only)

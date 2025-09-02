@@ -17,7 +17,6 @@ const mapper = enhanceEntityMapper<typeof users.$inferSelect, UserEntity>((row: 
     id: row.id,
     name: row.name,
     email: row.email,
-    passwordHash: row.passwordHash,
     role: row.role,
     emailVerified: row.emailVerified,
     createdAt: row.createdAt,
@@ -151,17 +150,25 @@ export class DrizzleUserRepository extends UserRepository {
     }
   }
 
-  async find(query?: UserFilterQuery, pagination?: { page?: number; limit?: number }): Promise<R<UserEntity[], Error>> {
+  async find(query?: UserFilterQuery, pagination?: { page?: number; limit?: number }): Promise<R<{ users: UserEntity[]; total: number }, Error>> {
     try {
+      console.log("🔍 Repository Debug - Query:", query)
+      console.log("🔍 Repository Debug - Pagination:", pagination)
+      
       const conditions = this.buildQueryConditions(query)
       const whereClause = conditions.length > 0 ? and(...conditions) : undefined
+      
+      console.log("🔍 Repository Debug - Conditions:", conditions)
+      console.log("🔍 Repository Debug - Where clause:", whereClause)
 
       // Get total count
       const countResult = await this.db.select({ count: sql<number>`count(*)` })
         .from(users)
         .where(whereClause)
         .execute()
-      const total = countResult[0]?.count || 0
+      const total = Number(countResult[0]?.count || 0)
+
+      console.log("🔍 Repository Debug - Total count:", total, "Type:", typeof total)
 
       // Apply pagination
       const page = pagination?.page || 1
@@ -181,11 +188,16 @@ export class DrizzleUserRepository extends UserRepository {
       const userResults = mapper.mapMany(results)
       
       if (userResults.isErr()) {
+        console.error("🔍 Repository Debug - Mapping error:", userResults.unwrapErr())
         return R.Err(new Error(`Failed to transform user records: ${userResults.unwrapErr().message}`))
       }
 
-      return R.Ok(userResults.unwrap())
+      const mappedUsers = userResults.unwrap()
+      console.log("🔍 Repository Debug - Mapped users count:", mappedUsers.length)
+      
+      return R.Ok({ users: mappedUsers, total })
     } catch (error) {
+      console.error("🔍 Repository Debug - Catch error:", error)
       return R.Err(new Error(`Failed to find users: ${error}`))
     }
   }
@@ -268,43 +280,24 @@ export class DrizzleUserRepository extends UserRepository {
     }
   }
 
-  async findByEmailAndPassword(
-    email: string, 
-    passwordHash: string
-  ): Promise<RepoResult<UserEntity, UserNotFoundError>> {
-    try {
-      const row = await this.db.query.users.findFirst({
-        where: and(
-          eq(users.email, email),
-          eq(users.passwordHash, passwordHash)
-        ),
-      })
 
-      if (!row) {
-        return R.Err(new UserValidationError("User not found"))
-      }
-
-      const result = mapper.mapOne(row)
-      if (result.isErr()) {
-        return R.Err(new UserValidationError("User not found"))
-      }
-      return R.Ok(result.unwrap())
-    } catch (error) {
-      return R.Err(new UserValidationError("User not found"))
-    }
-  }
 
   private buildQueryConditions(query?: UserFilterQuery) {
     const conditions = []
     
+    console.log("🔍 BuildQueryConditions Debug - Input query:", query)
+    
     if (query?.email) {
+      console.log("🔍 BuildQueryConditions Debug - Adding email condition:", query.email)
       conditions.push(ilike(users.email, `%${query.email}%`))
     }
     
     if (query?.role) {
+      console.log("🔍 BuildQueryConditions Debug - Adding role condition:", query.role)
       conditions.push(eq(users.role, query.role))
     }
     
+    console.log("🔍 BuildQueryConditions Debug - Final conditions:", conditions)
     return conditions
   }
 }

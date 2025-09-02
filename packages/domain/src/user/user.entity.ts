@@ -133,17 +133,18 @@ export class UserEntity extends BaseEntity implements UserType {
     createdAt: Date
     updatedAt: Date
   }): UserEntity {
-    // Convert Date to the proper DateTime type expected by the schema
-    const userData: UserType = {
-      id: UserIdSchema.new(), // Use new() instead of fromTrusted
-      name: data.name as UserType["name"],
-      email: data.email as UserType["email"],
-      role: data.role as UserType["role"],
+    // Validate and convert the data using the schema
+    const validatedData = S.decodeUnknownSync(UserSchema)({
+      id: data.id,
+      name: data.name,
+      email: data.email,
+      role: data.role,
       emailVerified: data.emailVerified,
-      createdAt: data.createdAt as any, // Type assertion for now
-      updatedAt: data.updatedAt as any, // Type assertion for now
-    }
-    return new UserEntity(userData)
+      createdAt: data.createdAt,
+      updatedAt: data.updatedAt,
+    })
+    
+    return new UserEntity(validatedData)
   }
 
   // Business methods

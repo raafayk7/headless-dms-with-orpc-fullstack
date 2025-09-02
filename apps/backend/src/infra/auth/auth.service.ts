@@ -46,6 +46,7 @@ export class AuthService {
       const user = UserEntity.fromRepository(userData)
       return Result.Ok(user)
     } catch (error) {
+      console.error("🔍 AuthService Debug - Error converting user:", error)
       return Result.Err(
         error instanceof Error 
           ? error 
