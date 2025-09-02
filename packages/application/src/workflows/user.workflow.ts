@@ -33,12 +33,12 @@ export class UserWorkflows {
       const saltRounds = 12
       const passwordHash = await bcrypt.hash(dto.data.password, saltRounds)
 
-      // Create user entity - ensure name is not undefined
-      const userName = dto.data.email.split('@')[0] || 'user'
+      // Create user entity using the name from DTO
       const user = UserEntity.create(
         {
-          name: userName,
+          name: dto.data.name,
           email: dto.data.email,
+          password: dto.data.password, // Include password for validation
           role: dto.data.role,
         },
         passwordHash

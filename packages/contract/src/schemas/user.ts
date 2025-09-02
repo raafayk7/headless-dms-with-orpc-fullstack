@@ -11,9 +11,10 @@ export const UserSchema = z
     name: z.string().min(1),
     email: z.email(),
     emailVerified: z.boolean(),
+    role: z.union([z.literal("admin"), z.literal("user")]),
     createdAt: z.date(),
     updatedAt: z.date(),
-    image: z.string().nullish(),
+    // image: z.string().nullish(),
   })
   .meta({
     description: "User object representing a registered user in the system.",
@@ -23,6 +24,7 @@ export const UserSchema = z
         name: "John Doe",
         email: "john.doe@dev.com",
         emailVerified: false,
+        role: "user",
         createdAt: new Date(),
         updatedAt: new Date(),
       },
@@ -63,11 +65,12 @@ export type User = z.infer<typeof UserSchema>
 export const NewUserSchema = UserSchema.pick({
   name: true,
   email: true,
+  role: true,
 })
   .extend({
     password: z
       .string()
-      .min(6, { error: "Password must be at least 6 characters long." }),
+      .min(8, { error: "Password must be at least 8 characters long." }),
   })
   .meta({
     description:

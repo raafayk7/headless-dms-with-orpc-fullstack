@@ -28,7 +28,7 @@ export const UserIdSchema = UserSchema.id
 export type UserType = S.Schema.Type<typeof UserSchema>
 export type UserEncoded = S.Schema.Encoded<typeof UserSchema>
 
-// Schema for creating new users (without passwordHash)
+// Schema for creating new users (with password for Better-Auth compatibility)
 export const NewUserSchema = S.Struct({
   name: S.String.pipe(
     S.minLength(1),
@@ -37,6 +37,10 @@ export const NewUserSchema = S.Struct({
   email: S.String.pipe(
     S.minLength(1),
     S.pattern(/^[^\s@]+@[^\s@]+\.[^\s@]+$/),
+  ),
+  password: S.String.pipe(
+    S.minLength(8),
+    S.maxLength(255),
   ),
   role: S.Union(
     S.Literal("user"),
