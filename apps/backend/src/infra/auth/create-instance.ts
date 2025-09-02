@@ -63,6 +63,9 @@ export const createBetterAuthInstance = <T extends Record<string, any>>(
         userAgent: "userAgent",
         userId: "userId",
       },
+      cookieCache: { enabled: true, maxAge: 60 * 5 }, // check database every 5 minutes
+      expiresIn: 60 * 20, // 20 minutes (20 * 60 seconds)
+      updateAge: 60 * 20, // update session every 20 minutes
     },
 
     emailAndPassword: {

@@ -135,10 +135,10 @@ function setupGracefulShutdown(server: any) {
     console.log(`\n🛑 Received ${signal}, initiating graceful shutdown...`)
     
     try {
-      // Close server
+      // Stop Bun server
       if (server) {
-        await server.close()
-        console.log("✅ Server closed")
+        server.stop()
+        console.log("✅ Server stopped")
       }
       
       console.log("✅ Graceful shutdown completed")
@@ -173,16 +173,16 @@ async function bootstrap() {
     // Step 3: Create server
     const app = createServer()
     
-    // Step 4: Setup graceful shutdown
-    setupGracefulShutdown(app)
-    
-    // Step 6: Start server
+    // Step 4: Start server
     console.log(`\n🌐 Starting server on port ${configs.app.PORT}...`)
     
     const server = Bun.serve({
       port: configs.app.PORT,
       fetch: app.fetch,
     })
+    
+    // Step 5: Setup graceful shutdown (after server is created)
+    setupGracefulShutdown(server)
     
     console.log(`✅ Server started successfully!`)
     console.log(`   URL: http://localhost:${configs.app.PORT}`)

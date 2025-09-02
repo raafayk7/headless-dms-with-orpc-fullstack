@@ -1,3 +1,4 @@
+import { ORPCError } from "@orpc/server"
 import type { AuthenticatedContext } from "@/web/types"
 
 /**
@@ -12,11 +13,17 @@ export const requireRole = (requiredRole: 'user' | 'admin') => {
       const { context } = params
       
       if (!context.user) {
-        throw new Error('Authentication required')
+        throw new ORPCError("UNAUTHORIZED", {
+          message: "Authentication required",
+          status: 401
+        })
       }
 
       if (context.user.role !== requiredRole && context.user.role !== 'admin') {
-        throw new Error('Insufficient permissions')
+        throw new ORPCError("FORBIDDEN", {
+          message: "Insufficient permissions",
+          status: 403
+        })
       }
 
       return handler(params)

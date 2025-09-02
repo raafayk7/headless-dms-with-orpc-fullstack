@@ -33,6 +33,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.0.0",
     "@carbonteq/fp": "catalog:",
+    "@faker-js/faker": "^9.4.0",
     "@orpc/openapi": "^1.7.4",
     "@orpc/server": "catalog:",
     "@orpc/zod": "catalog:",
