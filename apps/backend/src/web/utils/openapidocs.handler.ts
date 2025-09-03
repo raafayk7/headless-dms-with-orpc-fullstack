@@ -37,7 +37,23 @@ export const addOpenApiDocs = async (
   container: DependencyContainer,
 ) => {
   const auth = resolveAuthFromContainer(container)
-  const authSpecs = await auth.api.generateOpenAPISchema()
+  const authSpecs = await auth.api.generateOpenAPISchema({
+    // basePath: "/auth"
+  })
+  
+  // Debug: Log the generated paths
+  console.log("🔍 Auth OpenAPI paths:", Object.keys(authSpecs.paths || {}))
+  
+  // Configure server URLs for Better-Auth
+  const baseUrl = config.app.BASE_URL
+  
+  authSpecs.servers = [
+    { 
+      url: baseUrl, 
+      description: config.app.NODE_ENV === "production" ? "Production Server" : "Development Server" 
+    } as any
+  ]
+  
   const authTag = {
     name: "auth",
     description: "Authentication with BetterAuth",
@@ -47,8 +63,14 @@ export const addOpenApiDocs = async (
 
     return authTag
   })
+  
+  // Fix the paths to include the /auth prefix and update tags
   authSpecs.paths = Object.fromEntries(
     Object.entries(authSpecs.paths).map(([uri, specs]) => {
+      // Ensure all auth paths start with /auth
+      const correctedUri = uri.startsWith('/auth') ? uri : `/auth${uri}`
+      
+      // Update tags
       if (specs.get?.tags) {
         specs.get.tags = specs.get.tags.map((t) =>
           t === "Default" ? "auth" : t,
@@ -60,16 +82,21 @@ export const addOpenApiDocs = async (
         )
       }
 
-      return [uri, specs]
+      return [correctedUri, specs]
     }),
   )
 
   const contractSpecs = await generator.generate(router, {
     info: {
-      title: "Carbonteq Starter API",
-      version: "0.0.0",
+      title: "Headless DMS API",
+      version: "1.0.0",
     },
-    servers: [{ url: "/api", description: "JSON-REST API" }],
+    servers: [
+      { 
+        url: `${baseUrl}/api`, 
+        description: "JSON-REST API" 
+      }
+    ],
   })
 
   // if (authSpecs.components?.securitySchemes) {
