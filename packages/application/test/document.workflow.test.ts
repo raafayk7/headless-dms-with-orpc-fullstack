@@ -12,6 +12,7 @@ import {
 import { DocumentEntity } from "@domain/document"
 import { DocumentRepository } from "@domain/document/document.repository"
 import { DocumentNotFoundError, DocumentAlreadyExistsError } from "@domain/document/document.errors"
+import { UserEntity } from "@domain/user"
 import { Result } from "@carbonteq/fp"
 import { JwtService } from "../src/services/jwt.service"
 import { StorageService } from "../../../apps/backend/src/infra/storage/storage.service"
@@ -128,10 +129,12 @@ class MockDocumentRepository implements DocumentRepository {
       }
       if (query.tags && query.tags.length > 0) {
         documents = documents.filter(d => 
-          query.tags.some((tag: string) => d.tags.includes(tag))
+          d.tags && query.tags.some((tag: string) => d.tags!.includes(tag))
         )
       }
     }
+
+    const total = documents.length
 
     // Apply pagination if provided
     if (pagination) {
@@ -140,12 +143,12 @@ class MockDocumentRepository implements DocumentRepository {
       documents = documents.slice(start, end)
     }
 
-    return Result.Ok(documents)
+    return Result.Ok({ documents, total })
   }
 
   async findByTags(tags: string[]) {
     const documents = Array.from(this.documents.values()).filter(d => 
-      tags.some(tag => d.tags.includes(tag))
+      d.tags && tags.some(tag => d.tags!.includes(tag))
     )
     return Result.Ok(documents)
   }
@@ -169,8 +172,21 @@ class MockDocumentRepository implements DocumentRepository {
     return Result.Ok(documents)
   }
 
-  async updateDocumentFields() {
-    return Result.Err(new DocumentNotFoundError("unknown" as any))
+  async updateDocumentFields(id: string, updates: any) {
+    const document = this.documents.get(id)
+    if (!document) {
+      return Result.Err(new DocumentNotFoundError(id as any))
+    }
+    
+    // Create updated document with new fields
+    const updatedDocument = {
+      ...document,
+      ...updates,
+      updatedAt: new Date()
+    }
+    
+    this.documents.set(id, updatedDocument)
+    return Result.Ok(updatedDocument)
   }
 
   async searchDocuments() {
@@ -180,6 +196,21 @@ class MockDocumentRepository implements DocumentRepository {
   async findRecentDocuments() {
     return Result.Ok([])
   }
+
+  async exists(query: any) {
+    // For simplicity, check if any document matches the query
+    const documents = Array.from(this.documents.values())
+    const exists = documents.some(d => {
+      if (query.id) return d.id === query.id
+      if (query.name) return d.name === query.name
+      return false
+    })
+    return Result.Ok(exists)
+  }
+
+  async count() {
+    return Result.Ok(this.documents.size)
+  }
 }
 
 describe("DocumentWorkflows", () => {
@@ -187,11 +218,26 @@ describe("DocumentWorkflows", () => {
   let mockRepository: MockDocumentRepository
   let mockStorageService: MockStorageService
   let mockJwtService: MockJwtService
+  let mockAdminUser: UserEntity
+
+  // Helper function to create a proper file object for tests
+  const createFileObject = (buffer: Buffer, name: string, type: string) => ({
+    buffer: buffer,
+    name: name,
+    type: type,
+    size: buffer.length
+  })
 
   beforeEach(() => {
     mockRepository = new MockDocumentRepository()
     mockStorageService = new MockStorageService()
     mockJwtService = new MockJwtService()
+    mockAdminUser = UserEntity.create({
+      name: "Admin User",
+      email: "admin@example.com",
+      password: "password123",
+      role: "admin"
+    })
     documentWorkflows = new DocumentWorkflows(
       mockRepository,
       mockStorageService as any,
@@ -204,16 +250,16 @@ describe("DocumentWorkflows", () => {
       const fileBuffer = Buffer.from("test file content")
       const uploadDto = UploadDocumentDto.create({
         name: "test-document.txt",
-        file: fileBuffer,
-        tags: ["test", "document"],
-        metadata: { category: "test", author: "tester" }
+        file: createFileObject(fileBuffer, "test-document.txt", "text/plain"),
+        tags: "test,document",
+        metadata: JSON.stringify({ category: "test", author: "tester" })
       })
 
       if (uploadDto.isErr()) {
         throw new Error("Failed to create DTO")
       }
 
-      const result = await documentWorkflows.uploadDocument(uploadDto.unwrap())
+      const result = await documentWorkflows.uploadDocument(mockAdminUser, uploadDto.unwrap())
       
       expect(result.isOk()).toBe(true)
       if (result.isOk()) {
@@ -230,14 +276,14 @@ describe("DocumentWorkflows", () => {
       const fileBuffer = Buffer.from("test file content")
       const uploadDto = UploadDocumentDto.create({
         name: "test-document.txt",
-        file: fileBuffer
+        file: createFileObject(fileBuffer, "test-document.txt", "text/plain")
       })
 
       if (uploadDto.isErr()) {
         throw new Error("Failed to create DTO")
       }
 
-      const result = await documentWorkflows.uploadDocument(uploadDto.unwrap())
+      const result = await documentWorkflows.uploadDocument(mockAdminUser, uploadDto.unwrap())
       
       expect(result.isOk()).toBe(true)
       if (result.isOk()) {
@@ -256,20 +302,20 @@ describe("DocumentWorkflows", () => {
       
       const doc1 = UploadDocumentDto.create({
         name: "document1.pdf",
-        file: fileBuffer,
-        tags: ["pdf", "important"],
-        metadata: { category: "documents" }
+        file: createFileObject(fileBuffer, "document1.pdf", "application/pdf"),
+        tags: "pdf,important",
+        metadata: JSON.stringify({ category: "documents" })
       })
 
       const doc2 = UploadDocumentDto.create({
         name: "document2.txt",
-        file: fileBuffer,
-        tags: ["text", "simple"],
-        metadata: { category: "text" }
+        file: createFileObject(fileBuffer, "document2.txt", "text/plain"),
+        tags: "text,simple",
+        metadata: JSON.stringify({ category: "text" })
       })
 
-      if (doc1.isOk()) await documentWorkflows.uploadDocument(doc1.unwrap())
-      if (doc2.isOk()) await documentWorkflows.uploadDocument(doc2.unwrap())
+      if (doc1.isOk()) await documentWorkflows.uploadDocument(mockAdminUser, doc1.unwrap())
+      if (doc2.isOk()) await documentWorkflows.uploadDocument(mockAdminUser, doc2.unwrap())
     })
 
     it("should get all documents without filters", async () => {
@@ -278,7 +324,7 @@ describe("DocumentWorkflows", () => {
       expect(result.isOk()).toBe(true)
       if (result.isOk()) {
         const documents = result.unwrap()
-        expect(documents.length).toBe(2)
+        expect(documents.documents.length).toBe(2)
       }
     })
 
@@ -296,8 +342,8 @@ describe("DocumentWorkflows", () => {
       expect(result.isOk()).toBe(true)
       if (result.isOk()) {
         const documents = result.unwrap()
-        expect(documents.length).toBe(1)
-        expect(documents[0].name).toBe("document1.pdf")
+        expect(documents.documents.length).toBe(1)
+        expect(documents.documents[0]?.name).toBe("document1.pdf")
       }
     })
 
@@ -315,8 +361,8 @@ describe("DocumentWorkflows", () => {
       expect(result.isOk()).toBe(true)
       if (result.isOk()) {
         const documents = result.unwrap()
-        expect(documents.length).toBe(1)
-        expect(documents[0].mimeType).toBe("application/pdf")
+        expect(documents.documents.length).toBe(1)
+        expect(documents.documents[0]?.mimeType).toBe("application/pdf")
       }
     })
 
@@ -334,8 +380,8 @@ describe("DocumentWorkflows", () => {
       expect(result.isOk()).toBe(true)
       if (result.isOk()) {
         const documents = result.unwrap()
-        expect(documents.length).toBe(1)
-        expect(documents[0].tags).toContain("important")
+        expect(documents.documents.length).toBe(1)
+        expect(documents.documents[0]?.tags).toContain("important")
       }
     })
 
@@ -354,7 +400,7 @@ describe("DocumentWorkflows", () => {
       expect(result.isOk()).toBe(true)
       if (result.isOk()) {
         const documents = result.unwrap()
-        expect(documents.length).toBe(1)
+        expect(documents.documents.length).toBe(1)
       }
     })
   })
@@ -365,14 +411,14 @@ describe("DocumentWorkflows", () => {
       const fileBuffer = Buffer.from("test content")
       const uploadDto = UploadDocumentDto.create({
         name: "test-document.txt",
-        file: fileBuffer
+        file: createFileObject(fileBuffer, "test-document.txt", "text/plain")
       })
 
       if (uploadDto.isErr()) {
         throw new Error("Failed to create DTO")
       }
 
-      const uploadResult = await documentWorkflows.uploadDocument(uploadDto.unwrap())
+      const uploadResult = await documentWorkflows.uploadDocument(mockAdminUser, uploadDto.unwrap())
       if (!uploadResult.isOk()) {
         throw new Error("Failed to upload document")
       }
@@ -402,16 +448,16 @@ describe("DocumentWorkflows", () => {
       const fileBuffer = Buffer.from("test content")
       const uploadDto = UploadDocumentDto.create({
         name: "original-name.txt",
-        file: fileBuffer,
-        tags: ["original"],
-        metadata: { original: "true" }
+        file: createFileObject(fileBuffer, "original-name.txt", "text/plain"),
+        tags: "original",
+        metadata: JSON.stringify({ original: "true" })
       })
 
       if (uploadDto.isErr()) {
         throw new Error("Failed to create DTO")
       }
 
-      const uploadResult = await documentWorkflows.uploadDocument(uploadDto.unwrap())
+      const uploadResult = await documentWorkflows.uploadDocument(mockAdminUser, uploadDto.unwrap())
       if (!uploadResult.isOk()) {
         throw new Error("Failed to upload document")
       }
@@ -428,7 +474,7 @@ describe("DocumentWorkflows", () => {
         throw new Error("Failed to create DTO")
       }
 
-      const result = await documentWorkflows.patchDocument(documentId, patchDto.unwrap())
+      const result = await documentWorkflows.patchDocument(mockAdminUser, documentId, patchDto.unwrap())
       
       expect(result.isOk()).toBe(true)
       if (result.isOk()) {
@@ -448,7 +494,7 @@ describe("DocumentWorkflows", () => {
         throw new Error("Failed to create DTO")
       }
 
-      const result = await documentWorkflows.patchDocument(documentId, patchDto.unwrap())
+      const result = await documentWorkflows.patchDocument(mockAdminUser, documentId, patchDto.unwrap())
       
       expect(result.isOk()).toBe(true)
       if (result.isOk()) {
@@ -460,7 +506,7 @@ describe("DocumentWorkflows", () => {
     })
 
     it("should replace metadata completely", async () => {
-      const patchDto = PatchDocumentDto.create({
+            const patchDto = PatchDocumentDto.create({      
         metadata: { new: "metadata", updated: "true" }
       })
 
@@ -468,7 +514,7 @@ describe("DocumentWorkflows", () => {
         throw new Error("Failed to create DTO")
       }
 
-      const result = await documentWorkflows.patchDocument(documentId, patchDto.unwrap())
+      const result = await documentWorkflows.patchDocument(mockAdminUser, documentId, patchDto.unwrap())
       
       expect(result.isOk()).toBe(true)
       if (result.isOk()) {
@@ -488,7 +534,7 @@ describe("DocumentWorkflows", () => {
         throw new Error("Failed to create DTO")
       }
 
-      const result = await documentWorkflows.patchDocument("non-existent-id", patchDto.unwrap())
+      const result = await documentWorkflows.patchDocument(mockAdminUser,"non-existent-id", patchDto.unwrap())
       
       expect(result.isErr()).toBe(true)
     })
@@ -500,20 +546,20 @@ describe("DocumentWorkflows", () => {
       const fileBuffer = Buffer.from("test content")
       const uploadDto = UploadDocumentDto.create({
         name: "test-document.txt",
-        file: fileBuffer
+        file: createFileObject(fileBuffer, "test-document.txt", "text/plain")
       })
 
       if (uploadDto.isErr()) {
         throw new Error("Failed to create DTO")
       }
 
-      const uploadResult = await documentWorkflows.uploadDocument(uploadDto.unwrap())
+      const uploadResult = await documentWorkflows.uploadDocument(mockAdminUser, uploadDto.unwrap())
       if (!uploadResult.isOk()) {
         throw new Error("Failed to upload document")
       }
 
       const documentId = uploadResult.unwrap().id
-      const result = await documentWorkflows.deleteDocument(documentId)
+      const result = await documentWorkflows.deleteDocument(mockAdminUser,documentId)
       
       expect(result.isOk()).toBe(true)
       if (result.isOk()) {
@@ -524,7 +570,7 @@ describe("DocumentWorkflows", () => {
     })
 
     it("should fail for non-existent document", async () => {
-      const result = await documentWorkflows.deleteDocument("non-existent-id")
+      const result = await documentWorkflows.deleteDocument(mockAdminUser,"non-existent-id")
       
       expect(result.isErr()).toBe(true)
     })
@@ -538,14 +584,14 @@ describe("DocumentWorkflows", () => {
       const fileBuffer = Buffer.from("test content")
       const uploadDto = UploadDocumentDto.create({
         name: "test-document.txt",
-        file: fileBuffer
+        file: createFileObject(fileBuffer, "test-document.txt", "text/plain")
       })
 
       if (uploadDto.isErr()) {
         throw new Error("Failed to create DTO")
       }
 
-      const uploadResult = await documentWorkflows.uploadDocument(uploadDto.unwrap())
+      const uploadResult = await documentWorkflows.uploadDocument(mockAdminUser, uploadDto.unwrap())
       if (!uploadResult.isOk()) {
         throw new Error("Failed to upload document")
       }
@@ -591,14 +637,14 @@ describe("DocumentWorkflows", () => {
       const fileBuffer = Buffer.from("test content")
       const uploadDto = UploadDocumentDto.create({
         name: "test-document.txt",
-        file: fileBuffer
+        file: createFileObject(fileBuffer, "test-document.txt", "text/plain")
       })
 
       if (uploadDto.isErr()) {
         throw new Error("Failed to create DTO")
       }
 
-      const uploadResult = await documentWorkflows.uploadDocument(uploadDto.unwrap())
+      const uploadResult = await documentWorkflows.uploadDocument(mockAdminUser, uploadDto.unwrap())
       if (!uploadResult.isOk()) {
         throw new Error("Failed to upload document")
       }
@@ -620,7 +666,7 @@ describe("DocumentWorkflows", () => {
       expect(result.isOk()).toBe(true)
       if (result.isOk()) {
         const data = result.unwrap()
-        expect(data.document.id).toBe(documentId)
+        expect(String(data.document.id)).toBe(documentId)
         expect(data.document.name).toBe("test-document.txt")
         expect(data.file).toBeInstanceOf(Buffer)
         expect(data.file.toString()).toBe("test content")

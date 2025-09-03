@@ -44,7 +44,7 @@ describe("CircuitBreaker", () => {
     const result = await cb.execute(async () => "should not execute")
     expect(result.isErr()).toBe(true)
     expect(result.unwrapErr()).toBeInstanceOf(CircuitBreakerError)
-    expect(result.unwrapErr().state).toBe(CircuitBreakerState.OPEN)
+    expect((result.unwrapErr() as CircuitBreakerError).state).toBe(CircuitBreakerState.OPEN)
   })
 
   it("should transition to HALF_OPEN after timeout", async () => {

@@ -1,32 +1,7 @@
 import { simpleSchemaDto } from "@application/utils/validation.utils"
 import { Schema as S } from "effect"
 
-// User registration DTO
-export const RegisterUserDtoSchema = S.Struct({
-  name: S.String.pipe(
-    S.minLength(1),
-    S.maxLength(255),
-  ),
-  email: S.String.pipe(S.pattern(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)),
-  password: S.String.pipe(S.minLength(8)),
-  role: S.Literal("user", "admin"),
-})
 
-export class RegisterUserDto extends simpleSchemaDto(
-  "RegisterUserDto",
-  RegisterUserDtoSchema,
-) {}
-
-// User login DTO
-export const LoginUserDtoSchema = S.Struct({
-  email: S.String.pipe(S.pattern(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)),
-  password: S.String.pipe(S.minLength(1)),
-})
-
-export class LoginUserDto extends simpleSchemaDto(
-  "LoginUserDto",
-  LoginUserDtoSchema,
-) {}
 
 // Update user password DTO
 export const UpdateUserPasswordDtoSchema = S.Struct({

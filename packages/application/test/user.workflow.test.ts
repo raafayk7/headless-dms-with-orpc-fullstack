@@ -1,7 +1,7 @@
 import "reflect-metadata"
 import { describe, it, expect, beforeEach } from "bun:test"
 import { UserWorkflows } from "../src/workflows/user.workflow"
-import { RegisterUserDto, LoginUserDto } from "../src/dtos/user.dto"
+
 import { UserEntity } from "@domain/user"
 import { UserRepository } from "@domain/user/user.repository"
 import { UserNotFoundError, UserAlreadyExistsError } from "@domain/user/user.errors"
@@ -53,7 +53,8 @@ class MockUserRepository implements UserRepository {
   }
 
   async find() {
-    return Result.Ok(Array.from(this.users.values()))
+    const users = Array.from(this.users.values())
+    return Result.Ok({ users, total: users.length })
   }
 
   async findByRole(role: "user" | "admin") {
@@ -85,122 +86,5 @@ describe("UserWorkflows", () => {
     userWorkflows = new UserWorkflows(mockRepository)
   })
 
-  describe("registerUser", () => {
-    it("should register a new user successfully", async () => {
-      const registerDto = RegisterUserDto.create({
-        email: "test@example.com",
-        password: "password123",
-        role: "user"
-      })
 
-      if (registerDto.isErr()) {
-        throw new Error("Failed to create DTO")
-      }
-
-      const result = await userWorkflows.registerUser(registerDto.unwrap())
-      
-      expect(result.isOk()).toBe(true)
-      if (result.isOk()) {
-        const data = result.unwrap()
-        expect(data.user.email).toBe("test@example.com" as any)
-        expect(data.user.role).toBe("user")
-        expect(data.message).toBe("User registered successfully")
-      }
-    })
-
-    it("should fail when user already exists", async () => {
-      // First registration
-      const registerDto1 = RegisterUserDto.create({
-        email: "test@example.com",
-        password: "password123",
-        role: "user"
-      })
-
-      if (registerDto1.isErr()) {
-        throw new Error("Failed to create DTO")
-      }
-
-      await userWorkflows.registerUser(registerDto1.unwrap())
-
-      // Second registration with same email
-      const registerDto2 = RegisterUserDto.create({
-        email: "test@example.com",
-        password: "password456",
-        role: "admin"
-      })
-
-      if (registerDto2.isErr()) {
-        throw new Error("Failed to create DTO")
-      }
-
-      const result = await userWorkflows.registerUser(registerDto2.unwrap())
-      
-      expect(result.isErr()).toBe(true)
-    })
-  })
-
-  describe("loginUser", () => {
-    it("should login user with correct credentials", async () => {
-      // First register a user
-      const registerDto = RegisterUserDto.create({
-        email: "test@example.com",
-        password: "password123",
-        role: "user"
-      })
-
-      if (registerDto.isErr()) {
-        throw new Error("Failed to create DTO")
-      }
-
-      await userWorkflows.registerUser(registerDto.unwrap())
-
-      // Then try to login
-      const loginDto = LoginUserDto.create({
-        email: "test@example.com",
-        password: "password123"
-      })
-
-      if (loginDto.isErr()) {
-        throw new Error("Failed to create DTO")
-      }
-
-      const result = await userWorkflows.loginUser(loginDto.unwrap())
-      
-      expect(result.isOk()).toBe(true)
-      if (result.isOk()) {
-        const user = result.unwrap()
-        expect(user.email).toBe("test@example.com" as any)
-        expect(user.role).toBe("user")
-      }
-    })
-
-    it("should fail with incorrect password", async () => {
-      // First register a user
-      const registerDto = RegisterUserDto.create({
-        email: "test@example.com",
-        password: "password123",
-        role: "user"
-      })
-
-      if (registerDto.isErr()) {
-        throw new Error("Failed to create DTO")
-      }
-
-      await userWorkflows.registerUser(registerDto.unwrap())
-
-      // Then try to login with wrong password
-      const loginDto = LoginUserDto.create({
-        email: "test@example.com",
-        password: "wrongpassword"
-      })
-
-      if (loginDto.isErr()) {
-        throw new Error("Failed to create DTO")
-      }
-
-      const result = await userWorkflows.loginUser(loginDto.unwrap())
-      
-      expect(result.isErr()).toBe(true)
-    })
-  })
 })

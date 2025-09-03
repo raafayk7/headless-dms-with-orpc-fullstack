@@ -1,6 +1,4 @@
 import {
-  RegisterUserDto,
-  LoginUserDto,
   UpdateUserRoleDto,
   UserFiltersDto,
   UserPaginationParamsDto,
@@ -8,9 +6,9 @@ import {
 import { ApplicationResult } from "@application/utils/application-result.utils"
 import { Result } from "@carbonteq/fp"
 import { UserEntity, UserRepository } from "@domain/user"
-import { UserNotFoundError, UserAlreadyExistsError } from "@domain/user/user.errors"
+import { UserNotFoundError } from "@domain/user/user.errors"
 import { autoInjectable } from "tsyringe"
-import bcrypt from "bcryptjs"
+
 
 @autoInjectable()
 export class UserWorkflows {
@@ -18,70 +16,21 @@ export class UserWorkflows {
     private readonly userRepository: UserRepository,
   ) {}
 
-  async registerUser(dto: RegisterUserDto): Promise<ApplicationResult<{ user: UserEntity; message: string }>> {
-    try {
-      // Check if user already exists
-      const existingUser = await this.userRepository.findByEmail(dto.data.email)
-      if (existingUser.isOk()) {
-        return ApplicationResult.fromResult(
-          Result.Err(new UserAlreadyExistsError(dto.data.email))
-        )
-      }
 
-      // Create user entity using the name from DTO
-      // Password will be handled by Better-Auth in the account table
-      const user = UserEntity.create({
-        name: dto.data.name,
-        email: dto.data.email,
-        password: dto.data.password, // Include password for validation
-        role: dto.data.role,
-      })
-
-      // Save to repository
-      const saveResult = await this.userRepository.create(user)
-      
-      return ApplicationResult.fromResult(
-        saveResult.map((savedUser) => ({
-          user: savedUser,
-          message: "User registered successfully"
-        }))
-      )
-    } catch (error) {
-      return ApplicationResult.fromResult(
-        Result.Err(error instanceof Error ? error : new Error("Failed to register user"))
-      )
-    }
-  }
-
-  async loginUser(dto: LoginUserDto): Promise<ApplicationResult<UserEntity>> {
-    try {
-      // Find user by email
-      const userResult = await this.userRepository.findByEmail(dto.data.email)
-      if (userResult.isErr()) {
-        return ApplicationResult.fromResult(
-          Result.Err(new Error(`User with email ${dto.data.email} not found`))
-        )
-      }
-
-      const user = userResult.unwrap()
-
-      // Password verification is now handled by Better-Auth
-      // This method is kept for compatibility but Better-Auth handles authentication
-      return ApplicationResult.fromResult(
-        Result.Ok(user)
-      )
-    } catch (error) {
-      return ApplicationResult.fromResult(
-        Result.Err(error instanceof Error ? error : new Error("Failed to login user"))
-      )
-    }
-  }
 
   async getUsers(
+    currentUser: UserEntity,
     filters?: UserFiltersDto,
     pagination?: UserPaginationParamsDto
   ): Promise<ApplicationResult<{ users: UserEntity[]; total: number }>> {
     try {
+      // Domain-level RBAC guard
+      if (!currentUser.isAdmin()) {
+        return ApplicationResult.fromResult(
+          Result.Err(new Error("Insufficient permissions: Admin access required"))
+        )
+      }
+
       console.log("🔍 Workflow Debug - Filters:", filters)
       console.log("🔍 Workflow Debug - Pagination:", pagination)
       
@@ -115,8 +64,15 @@ export class UserWorkflows {
     }
   }
 
-  async getUserById(id: string): Promise<ApplicationResult<UserEntity>> {
+  async getUserById(currentUser: UserEntity, id: string): Promise<ApplicationResult<UserEntity>> {
     try {
+      // Domain-level RBAC guard
+      if (!currentUser.isAdmin()) {
+        return ApplicationResult.fromResult(
+          Result.Err(new Error("Insufficient permissions: Admin access required"))
+        )
+      }
+
       // Convert string ID to branded type - use type assertion for now
       const userId = id as any
       const userResult = await this.userRepository.findById(userId)
@@ -131,10 +87,18 @@ export class UserWorkflows {
 
 
   async updateUserRole(
+    currentUser: UserEntity,
     targetUserId: string,
     dto: UpdateUserRoleDto
   ): Promise<ApplicationResult<{ success: boolean; message: string }>> {
     try {
+      // Domain-level RBAC guard
+      if (!currentUser.isAdmin()) {
+        return ApplicationResult.fromResult(
+          Result.Err(new Error("Insufficient permissions: Admin access required"))
+        )
+      }
+
       // Convert string ID to branded type - use type assertion for now
       const brandedUserId = targetUserId as any
       
@@ -156,8 +120,15 @@ export class UserWorkflows {
     }
   }
 
-  async deleteUser(targetUserId: string): Promise<ApplicationResult<{ success: boolean; message: string }>> {
+  async deleteUser(currentUser: UserEntity, targetUserId: string): Promise<ApplicationResult<{ success: boolean; message: string }>> {
     try {
+      // Domain-level RBAC guard
+      if (!currentUser.isAdmin()) {
+        return ApplicationResult.fromResult(
+          Result.Err(new Error("Insufficient permissions: Admin access required"))
+        )
+      }
+
       // Convert string ID to branded type - use type assertion for now
       const brandedUserId = targetUserId as any
       

@@ -12,7 +12,7 @@ const whoamiHandler = base.whoami.handler(async ({ context }) => {
 })
 
 // Get users with filtering and pagination (admin only)
-const getUsersHandler = base.getUsers.handler(requireAdmin(async ({ input }) => {
+const getUsersHandler = base.getUsers.handler(requireAdmin(async ({ input, context }) => {
   const userWorkflows = container.resolve(UserWorkflows)
   
   // Handle optional query parameters
@@ -28,6 +28,7 @@ const getUsersHandler = base.getUsers.handler(requireAdmin(async ({ input }) => 
   console.log("🔍 Router Debug - Page:", page, "Limit:", limit)
   
   const result = await userWorkflows.getUsers(
+    context.user,
     { data: query },
     { data: { page, limit } }
   )
@@ -63,9 +64,9 @@ const getUsersHandler = base.getUsers.handler(requireAdmin(async ({ input }) => 
 }))
 
 // Get user by ID (admin only)
-const getUserByIdHandler = base.getUserById.handler(requireAdmin(async ({ input }) => {
+const getUserByIdHandler = base.getUserById.handler(requireAdmin(async ({ input, context }) => {
   const userWorkflows = container.resolve(UserWorkflows)
-  const result = await userWorkflows.getUserById(input.params.id)
+  const result = await userWorkflows.getUserById(context.user, input.params.id)
   
   if (result.isErr()) {
     return handleAppResult(result)
@@ -82,9 +83,9 @@ const getUserByIdHandler = base.getUserById.handler(requireAdmin(async ({ input 
 }))
 
 // Update user role (admin only)
-const updateUserRoleHandler = base.updateUserRole.handler(requireAdmin(async ({ input }) => {
+const updateUserRoleHandler = base.updateUserRole.handler(requireAdmin(async ({ input, context }) => {
   const userWorkflows = container.resolve(UserWorkflows)
-  const result = await userWorkflows.updateUserRole(input.params.id, { data: input.body })
+  const result = await userWorkflows.updateUserRole(context.user, input.params.id, { data: input.body })
   
   return handleAppResult(result)
 }))
@@ -92,9 +93,9 @@ const updateUserRoleHandler = base.updateUserRole.handler(requireAdmin(async ({ 
 
 
 // Delete user (admin only)
-const deleteUserHandler = base.deleteUser.handler(requireAdmin(async ({ input }) => {
+const deleteUserHandler = base.deleteUser.handler(requireAdmin(async ({ input, context }) => {
   const userWorkflows = container.resolve(UserWorkflows)
-  const result = await userWorkflows.deleteUser(input.params.id)
+  const result = await userWorkflows.deleteUser(context.user, input.params.id)
   
   return handleAppResult(result)
 }))

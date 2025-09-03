@@ -12,6 +12,7 @@ import { ApplicationResult } from "@application/utils/application-result.utils"
 import { Result } from "@carbonteq/fp"
 import { DocumentEntity, DocumentRepository } from "@domain/document"
 import type { DocumentType } from "@domain/document"
+import { UserEntity } from "@domain/user"
 import { DocumentNotFoundError } from "@domain/document/document.errors"
 import { autoInjectable } from "tsyringe"
 import { JwtService } from "@application/services/jwt.service"
@@ -28,8 +29,14 @@ export class DocumentWorkflows {
   /**
    * Upload document (this IS creation - no separate create method)
    */
-  async uploadDocument(dto: UploadDocumentDto): Promise<ApplicationResult<DocumentEntity>> {
+  async uploadDocument(currentUser: UserEntity, dto: UploadDocumentDto): Promise<ApplicationResult<DocumentEntity>> {
     try {
+      // Domain-level RBAC guard
+      if (!currentUser.isAdmin()) {
+        return ApplicationResult.fromResult(
+          Result.Err(new Error("Insufficient permissions: Admin access required"))
+        )
+      }
       // 1. Extract file data from multipart form-data
       const fileData = dto.data.file as any
       console.log("🔍 File Debug - Raw file data:", fileData)
@@ -150,10 +157,17 @@ export class DocumentWorkflows {
    * Patch document (replaces tags/metadata if provided, doesn't add to existing)
    */
   async patchDocument(
+    currentUser: UserEntity,
     id: string,
     dto: PatchDocumentDto
   ): Promise<ApplicationResult<DocumentEntity>> {
     try {
+      // Domain-level RBAC guard
+      if (!currentUser.isAdmin()) {
+        return ApplicationResult.fromResult(
+          Result.Err(new Error("Insufficient permissions: Admin access required"))
+        )
+      }
       // Build updates object with only provided fields
       const updates: any = {}
       
@@ -186,8 +200,14 @@ export class DocumentWorkflows {
   /**
    * Delete document
    */
-  async deleteDocument(id: string): Promise<ApplicationResult<{ success: boolean; message: string }>> {
+  async deleteDocument(currentUser: UserEntity, id: string): Promise<ApplicationResult<{ success: boolean; message: string }>> {
     try {
+      // Domain-level RBAC guard
+      if (!currentUser.isAdmin()) {
+        return ApplicationResult.fromResult(
+          Result.Err(new Error("Insufficient permissions: Admin access required"))
+        )
+      }
       // Get document to get file path
       const documentResult = await this.documentRepository.findById(id as DocumentType["id"])
       if (documentResult.isErr()) {

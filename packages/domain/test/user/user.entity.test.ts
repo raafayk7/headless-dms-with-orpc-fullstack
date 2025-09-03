@@ -10,13 +10,13 @@ describe("UserEntity", () => {
         const user = UserEntity.create({
           name: "Test User",
           email: "test@example.com",
+          password: "password123", // Include password for validation
           role: "admin"
-        }, "hash123")
+        })
 
-        expect(user.name).toBe("Test User")
+        expect(String(user.name)).toBe("Test User")
         expect(user.email).toBe(user.email) // Use the actual email value
         expect(user.role).toBe("admin")
-        expect(user.passwordHash).toBe("hash123")
         expect(user.emailVerified).toBe(false) // Default value for new users
       })
 
@@ -26,19 +26,21 @@ describe("UserEntity", () => {
           UserEntity.create({
             name: "Test User",
             email: "invalid-email",
+            password: "password123",
             role: "user"
-          }, "hash123")
+          })
         }).toThrow()
       })
 
-      it("should reject empty password hash", () => {
-        // Test with empty password hash - should fail at entity creation
+      it("should reject empty password", () => {
+        // Test with empty password - should fail at entity creation
         expect(() => {
           UserEntity.create({
             name: "Test User",
             email: "test@example.com",
+            password: "",
             role: "user"
-          }, "")
+          })
         }).toThrow()
       })
 
@@ -48,8 +50,9 @@ describe("UserEntity", () => {
           UserEntity.create({
             name: "Test User",
             email: "test@example.com",
+            password: "password123",
             role: "invalid" as any
-          }, "hash123")
+          })
         }).toThrow()
       })
 
@@ -59,8 +62,9 @@ describe("UserEntity", () => {
           UserEntity.create({
             name: "",
             email: "test@example.com",
+            password: "password123",
             role: "user"
-          }, "hash123")
+          })
         }).toThrow()
       })
 
@@ -71,8 +75,9 @@ describe("UserEntity", () => {
           UserEntity.create({
             name: longName,
             email: "test@example.com",
+            password: "password123",
             role: "user"
-          }, "hash123")
+          })
         }).toThrow()
       })
     })
@@ -82,6 +87,7 @@ describe("UserEntity", () => {
         const validNewUser = {
           name: "New User",
           email: "newuser@example.com",
+          password: "password123",
           role: "user" as const
         }
 
@@ -93,6 +99,7 @@ describe("UserEntity", () => {
         const invalidNewUser = {
           name: "Invalid User",
           email: "invalid-email",
+          password: "password123",
           role: "user" as const
         }
 
@@ -104,6 +111,7 @@ describe("UserEntity", () => {
         const invalidNewUser = {
           name: "",
           email: "valid@example.com",
+          password: "password123",
           role: "user" as const
         }
 
@@ -116,6 +124,7 @@ describe("UserEntity", () => {
         const invalidNewUser = {
           name: longName,
           email: "valid@example.com",
+          password: "password123",
           role: "user" as const
         }
 
@@ -172,13 +181,13 @@ describe("UserEntity", () => {
         const user = UserEntity.create({
           name: "New User",
           email: "newuser@example.com",
+          password: "password123",
           role: "user"
-        }, "newhash123")
+        })
 
-        expect(user.name).toBe("New User")
+        expect(String(user.name)).toBe("New User")
         expect(user.email).toBe(user.email) // Use the actual email value
         expect(user.role).toBe("user")
-        expect(user.passwordHash).toBe("newhash123")
         expect(user.emailVerified).toBe(false) // Default value for new users
         expect(user.id).toBeDefined()
         expect(user.createdAt).toBeDefined()
@@ -189,10 +198,11 @@ describe("UserEntity", () => {
         const user = UserEntity.create({
           name: "Admin User",
           email: "admin@example.com",
+          password: "password123",
           role: "admin"
-        }, "adminhash123")
+        })
 
-        expect(user.name).toBe("Admin User")
+        expect(String(user.name)).toBe("Admin User")
         expect(user.role).toBe("admin")
         expect(user.isAdmin()).toBe(true)
         expect(user.emailVerified).toBe(false)
@@ -202,10 +212,9 @@ describe("UserEntity", () => {
     describe("fromRepository", () => {
       it("should create user from repository data", () => {
         const repoData = {
-          id: "user-123",
+          id: "550e8400-e29b-41d4-a716-446655440000", // Valid UUID
           name: "Repository User",
           email: "repo@example.com",
-          passwordHash: "repohash123",
           role: "user",
           emailVerified: true,
           createdAt: new Date("2024-01-01"),
@@ -214,20 +223,18 @@ describe("UserEntity", () => {
 
         const user = UserEntity.fromRepository(repoData)
 
-        expect(user.name).toBe("Repository User")
+        expect(String(user.name)).toBe("Repository User")
         expect(user.email).toBe(user.email) // Use the actual email value
         expect(user.role).toBe("user")
-        expect(user.passwordHash).toBe("repohash123")
         expect(user.emailVerified).toBe(true)
         expect(user.id).toBeDefined()
       })
 
       it("should handle unverified email from repository", () => {
         const repoData = {
-          id: "user-456",
+          id: "550e8400-e29b-41d4-a716-446655440001", // Valid UUID
           name: "Unverified User",
           email: "unverified@example.com",
-          passwordHash: "hash123",
           role: "user",
           emailVerified: false,
           createdAt: new Date("2024-01-01"),
@@ -236,7 +243,7 @@ describe("UserEntity", () => {
 
         const user = UserEntity.fromRepository(repoData)
 
-        expect(user.name).toBe("Unverified User")
+        expect(String(user.name)).toBe("Unverified User")
         expect(user.emailVerified).toBe(false)
       })
     })
@@ -247,24 +254,23 @@ describe("UserEntity", () => {
         const originalUser = UserEntity.create({
           name: "From User",
           email: "from@example.com",
+          password: "password123",
           role: "user"
-        }, "fromhash123")
+        })
 
         const user = UserEntity.from({
           id: originalUser.id,
           name: originalUser.name,
           email: originalUser.email,
-          passwordHash: originalUser.passwordHash,
           role: originalUser.role,
           emailVerified: originalUser.emailVerified,
           createdAt: originalUser.createdAt,
           updatedAt: originalUser.updatedAt
         })
 
-        expect(user.name).toBe("From User")
+        expect(String(user.name)).toBe("From User")
         expect(user.email).toBe(user.email) // Use the actual email value
         expect(user.role).toBe("user")
-        expect(user.passwordHash).toBe("fromhash123")
         expect(user.emailVerified).toBe(false)
       })
     })
@@ -275,10 +281,11 @@ describe("UserEntity", () => {
       const adminUser = UserEntity.create({
         name: "Admin User",
         email: "admin@example.com",
+        password: "password123",
         role: "admin"
-      }, "adminhash123")
+      })
 
-      expect(adminUser.name).toBe("Admin User")
+      expect(String(adminUser.name)).toBe("Admin User")
       expect(adminUser.isAdmin()).toBe(true)
       expect(adminUser.isUser()).toBe(false)
       expect(adminUser.hasPermission("admin")).toBe(true)
@@ -289,10 +296,11 @@ describe("UserEntity", () => {
       const regularUser = UserEntity.create({
         name: "Regular User",
         email: "user@example.com",
+        password: "password123",
         role: "user"
-      }, "userhash123")
+      })
 
-      expect(regularUser.name).toBe("Regular User")
+      expect(String(regularUser.name)).toBe("Regular User")
       expect(regularUser.isAdmin()).toBe(false)
       expect(regularUser.isUser()).toBe(true)
       expect(regularUser.hasPermission("admin")).toBe(false)
@@ -303,14 +311,16 @@ describe("UserEntity", () => {
       const adminUser = UserEntity.create({
         name: "Admin User",
         email: "admin@example.com",
+        password: "password123",
         role: "admin"
-      }, "adminhash123")
+      })
 
       const regularUser = UserEntity.create({
         name: "Regular User",
         email: "user@example.com",
+        password: "password123",
         role: "user"
-      }, "userhash123")
+      })
 
       // Admin can access both user and admin permissions
       expect(adminUser.hasPermission("user")).toBe(true)
@@ -325,16 +335,16 @@ describe("UserEntity", () => {
       const verifiedUser = UserEntity.create({
         name: "Verified User",
         email: "verified@example.com",
+        password: "password123",
         role: "user"
-      }, "hash123")
+      })
 
       expect(verifiedUser.emailVerified).toBe(false) // Default value
 
       const verifiedUserFromRepo = UserEntity.fromRepository({
-        id: "verified-123",
+        id: "550e8400-e29b-41d4-a716-446655440002", // Valid UUID
         name: "Verified User",
         email: "verified@example.com",
-        passwordHash: "hash123",
         role: "user",
         emailVerified: true,
         createdAt: new Date(),
@@ -350,12 +360,13 @@ describe("UserEntity", () => {
       const user = UserEntity.create({
         name: "Original Name",
         email: "original@example.com",
+        password: "password123",
         role: "user"
-      }, "originalhash123")
+      })
 
       const updatedUser = user.updateName("New Name")
 
-      expect(updatedUser.name).toBe("New Name")
+      expect(String(updatedUser.name)).toBe("New Name")
       expect(updatedUser).not.toBe(user) // Should be new instance
       expect(updatedUser.id).toBe(user.id) // ID should remain same
       expect(updatedUser.updatedAt).not.toEqual(user.updatedAt) // Should update timestamp
@@ -365,8 +376,9 @@ describe("UserEntity", () => {
       const user = UserEntity.create({
         name: "Original Name",
         email: "original@example.com",
+        password: "password123",
         role: "user"
-      }, "originalhash123")
+      })
 
       // Test empty name
       expect(() => {
@@ -384,8 +396,9 @@ describe("UserEntity", () => {
       const user = UserEntity.create({
         name: "Original Name",
         email: "original@example.com",
+        password: "password123",
         role: "user"
-      }, "originalhash123")
+      })
 
       const updatedUser = user.updateEmail("newemail@example.com")
 
@@ -399,8 +412,9 @@ describe("UserEntity", () => {
       const user = UserEntity.create({
         name: "Original Name",
         email: "original@example.com",
+        password: "password123",
         role: "user"
-      }, "originalhash123")
+      })
 
       const updatedUser = user.updateRole("admin")
 
@@ -410,26 +424,15 @@ describe("UserEntity", () => {
       expect(updatedUser.isAdmin()).toBe(true)
     })
 
-    it("should update password hash and return new instance", () => {
-      const user = UserEntity.create({
-        name: "Original Name",
-        email: "original@example.com",
-        role: "user"
-      }, "originalhash123")
 
-      const updatedUser = user.updatePassword("newhash456")
-
-      expect(updatedUser.passwordHash).toBe("newhash456")
-      expect(updatedUser).not.toBe(user) // Should be new instance
-      expect(updatedUser.id).toBe(user.id) // ID should remain same
-    })
 
     it("should verify email and return new instance", () => {
       const user = UserEntity.create({
         name: "Unverified User",
         email: "unverified@example.com",
+        password: "password123",
         role: "user"
-      }, "hash123")
+      })
 
       expect(user.emailVerified).toBe(false) // Default value
 
@@ -447,8 +450,9 @@ describe("UserEntity", () => {
       const user = UserEntity.create({
         name: "Serialize User",
         email: "serialize@example.com",
+        password: "password123",
         role: "user"
-      }, "serializehash123")
+      })
 
       const serialized = user.serialize()
       expect(serialized).toBeDefined()
@@ -459,8 +463,9 @@ describe("UserEntity", () => {
       const user = UserEntity.create({
         name: "Repo User",
         email: "repo@example.com",
+        password: "password123",
         role: "user"
-      }, "repohash123")
+      })
 
       const repoFormat = user.toRepository()
 
@@ -468,7 +473,7 @@ describe("UserEntity", () => {
       expect(repoFormat.name).toBe("Repo User")
       expect(repoFormat.email).toBe(user.email)
       expect(repoFormat.role).toBe(user.role)
-      expect(repoFormat.passwordHash).toBe(user.passwordHash)
+
       expect(repoFormat.emailVerified).toBe(false)
       expect(repoFormat.createdAt).toBeDefined()
       expect(repoFormat.updatedAt).toBeDefined()
@@ -476,10 +481,9 @@ describe("UserEntity", () => {
 
     it("should preserve email verification status in repository format", () => {
       const user = UserEntity.fromRepository({
-        id: "verified-123",
+        id: "550e8400-e29b-41d4-a716-446655440003", // Valid UUID
         name: "Verified User",
         email: "verified@example.com",
-        passwordHash: "hash123",
         role: "user",
         emailVerified: true,
         createdAt: new Date(),
@@ -497,10 +501,11 @@ describe("UserEntity", () => {
       const user = UserEntity.create({
         name: "Special User",
         email: "test+tag@example.com",
+        password: "password123",
         role: "user"
-      }, "specialhash123")
+      })
 
-      expect(user.name).toBe("Special User")
+      expect(String(user.name)).toBe("Special User")
       expect(user.email).toBe(user.email) // Use the actual email value
       expect(user.isUser()).toBe(true)
     })
@@ -511,8 +516,9 @@ describe("UserEntity", () => {
         UserEntity.create({
           name: "Case User",
           email: "case@example.com",
+          password: "password123",
           role: "USER" as any, // Type assertion for test
-        }, "hash123")
+        })
       }).toThrow()
     })
 
@@ -520,10 +526,11 @@ describe("UserEntity", () => {
       const user = UserEntity.create({
         name: "John Doe-Smith Jr.",
         email: "john@example.com",
+        password: "password123",
         role: "user"
-      }, "hash123")
+      })
 
-      expect(user.name).toBe("John Doe-Smith Jr.")
+      expect(String(user.name)).toBe("John Doe-Smith Jr.")
       expect(user.name.length).toBeLessThanOrEqual(255)
     })
 
@@ -531,10 +538,11 @@ describe("UserEntity", () => {
       const user = UserEntity.create({
         name: "A", // Single character name
         email: "min@example.com",
+        password: "password123",
         role: "user"
-      }, "hash123")
+      })
 
-      expect(user.name).toBe("A")
+      expect(String(user.name)).toBe("A")
       expect(user.name.length).toBeGreaterThanOrEqual(1)
     })
 
@@ -543,10 +551,11 @@ describe("UserEntity", () => {
       const user = UserEntity.create({
         name: maxName,
         email: "max@example.com",
+        password: "password123",
         role: "user"
-      }, "hash123")
+      })
 
-      expect(user.name).toBe(maxName)
+      expect(String(user.name)).toBe(maxName)
       expect(user.name.length).toBe(255)
     })
   })

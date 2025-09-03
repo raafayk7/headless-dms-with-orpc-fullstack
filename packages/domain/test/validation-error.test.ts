@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test"
-import { GroceryListCreateSchema } from "@domain/grocery-list/grocery-list.entity"
+import { NewUserSchema } from "@domain/user/user.entity"
 import { ValidationError } from "@domain/utils/base.errors"
 import {
   parseErrorsToValidationError,
@@ -18,10 +18,12 @@ describe("Validation Error Utils", () => {
     })
 
     it("should handle real parse error from empty string validation", () => {
-      // Generate a real ParseError using GroceryListCreateSchema with invalid data
-      const result = S.decodeUnknownEither(GroceryListCreateSchema)({
+      // Generate a real ParseError using NewUserSchema with invalid data
+      const result = S.decodeUnknownEither(NewUserSchema)({
         name: "", // Invalid: empty string (violates minLength(1))
-        description: "Valid description",
+        email: "test@example.com",
+        password: "password123",
+        role: "user"
       })
 
       expect(result._tag).toBe("Left")
@@ -40,8 +42,10 @@ describe("Validation Error Utils", () => {
 
     it("should handle real parse error from missing required fields", () => {
       // Test with missing required field 'name'
-      const result = S.decodeUnknownEither(GroceryListCreateSchema)({
-        description: "Valid description",
+      const result = S.decodeUnknownEither(NewUserSchema)({
+        email: "test@example.com",
+        password: "password123",
+        role: "user"
         // Missing required 'name' field
       })
 
@@ -58,9 +62,11 @@ describe("Validation Error Utils", () => {
 
     it("should handle real parse error from wrong data types", () => {
       // Test with invalid data types
-      const result = S.decodeUnknownEither(GroceryListCreateSchema)({
+      const result = S.decodeUnknownEither(NewUserSchema)({
         name: 123, // Should be string
-        description: true, // Should be string
+        email: "test@example.com",
+        password: "password123",
+        role: "user"
       })
 
       expect(result._tag).toBe("Left")
@@ -75,7 +81,7 @@ describe("Validation Error Utils", () => {
 
     it("should handle real parse error from null input", () => {
       // Test with completely wrong data type (null instead of object)
-      const result = S.decodeUnknownEither(GroceryListCreateSchema)(null)
+      const result = S.decodeUnknownEither(NewUserSchema)(null)
 
       expect(result._tag).toBe("Left")
 

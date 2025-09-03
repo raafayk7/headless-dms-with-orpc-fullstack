@@ -97,9 +97,9 @@ const getDocumentByIdHandler = base.getDocumentById.handler(async ({ input }) =>
 })
 
 // Upload document (admin only)
-const uploadDocumentHandler = base.uploadDocument.handler(requireAdmin(async ({ input }) => {
+const uploadDocumentHandler = base.uploadDocument.handler(requireAdmin(async ({ input, context }) => {
   const documentWorkflows = container.resolve(DocumentWorkflows)
-  const result = await documentWorkflows.uploadDocument(input)
+  const result = await documentWorkflows.uploadDocument(context.user, input)
   
   if (result.isErr()) {
     return handleAppResult(result)
@@ -120,9 +120,9 @@ const uploadDocumentHandler = base.uploadDocument.handler(requireAdmin(async ({ 
 }))
 
 // Update document (admin only)
-const updateDocumentHandler = base.updateDocument.handler(requireAdmin(async ({ input }) => {
+const updateDocumentHandler = base.updateDocument.handler(requireAdmin(async ({ input, context }) => {
   const documentWorkflows = container.resolve(DocumentWorkflows)
-  const result = await documentWorkflows.patchDocument(input.params.id, { data: input.body })
+  const result = await documentWorkflows.patchDocument(context.user, input.params.id, { data: input.body })
   
   if (result.isErr()) {
     return handleAppResult(result)
@@ -163,9 +163,9 @@ const generateDownloadLinkHandler = base.generateDownloadLink.handler(async ({ i
 
 
 // Delete document (admin only)
-const deleteDocumentHandler = base.deleteDocument.handler(requireAdmin(async ({ input }) => {
+const deleteDocumentHandler = base.deleteDocument.handler(requireAdmin(async ({ input, context }) => {
   const documentWorkflows = container.resolve(DocumentWorkflows)
-  const result = await documentWorkflows.deleteDocument(input.params.id)
+  const result = await documentWorkflows.deleteDocument(context.user, input.params.id)
   
   return handleAppResult(result)
 }))
